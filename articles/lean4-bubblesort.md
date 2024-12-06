@@ -1,6 +1,6 @@
 ---
 title: "Lean4でバブルソートを書く"
-emoji: "📘"
+emoji: "🔄"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["lean", "lean4"]
 published: false
@@ -13,6 +13,10 @@ https://adventar.org/calendars/10209
 Lean4は定理証明支援系かつ関数型プログラミング言語なんですが、今のところ日本語記事は定理証明に焦点を当ててるものがわりかし体感多い気がします(←ゴミみたいな保険かけ)
 
 なので、Lean4のプログラミング的側面の基本的なところの記事が増えってったらいいなってことで、書いてます
+
+:::message
+2024/11/24に`Array.swap`のシグネチャを変更するコミットが入った(https://github.com/leanprover/lean4/pull/6194)ので、nightly(2024-12-05)版を使用しています
+:::
 
 :::message
 引用するLeanのドキュメントは、日本語訳がある場合はそちらを優先します
@@ -28,7 +32,7 @@ def bubbleSort [Inhabited α] [Ord α] (arr : Array α) : Array α := Id.run do
   for i in [0:arr.size] do
     for j in [0:arr.size - 1 - i] do
       match Ord.compare arr[j]! arr[j + 1]! with
-      |.gt => arr := arr.swap! j (j + 1)
+      |.gt => arr := arr.swapIfInBounds j (j + 1)
       |.lt |.eq => pure ()
   arr
 ```
@@ -89,7 +93,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
   loop₁ arr 0
 ```
 
-内側のループは、こう
+内側のループを書いて、こう
 ```
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
@@ -107,7 +111,38 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
   loop₁ arr 0
 ```
 
-これで完成！……って言いたいじゃないですか。
+これで完成！……って言いたいじゃないですか。ここからが本番だ
+
+この時点で4箇所エラーが出てます
+![](/images/articles/lean4-bubblesort/error1.png)
+
+一旦`loop₁`にあるエラーは無視して、indexアクセスと`arr.swap`のエラーを気にします
+
+```
+failed to prove index is valid, possible solutions:
+  - Use `have`-expressions to prove the index is valid
+  - Use `a[i]!` notation instead, runtime check is performed, and 'Panic' error message is produced if index is not valid
+  - Use `a[i]?` notation instead, result is an `Option` type
+  - Use `a[i]'h` notation instead, where `h` is a proof that index is valid
+α : Type ?u.19884
+inst✝² : Ord α
+arr✝¹ : Array α
+inst✝¹ : Ord α
+arr✝ : Array α
+i✝ : Nat
+inst✝ : Ord α
+arr : Array α
+i j : Nat
+⊢ j < arr.size
+```
+
+```
+failed to prove index is valid, possible solutions:
+......(中略)
+⊢ j + 1 < arr.size
+```
+
+これらのエラーが言ってる通り、配列への**普通の**indexアクセスにはindexが配列の範囲内であることの証明が必要になります。
 
 \
 \
@@ -161,4 +196,14 @@ https://leanprover-community.github.io/archive/stream/270676-lean4/topic/Termina
 
 ### for文で証明を取ろうとしても
 
-### `Array.swap`のシグネチャが変わってる
+### 以前の`Array.swap`のシグネチャ
+
+## 小ネタ
+
+Error Lens入れるといいよ
+
+## 戯言
+
+Lean4のシンタックスハイライト早く欲しいよ～
+
+Lean4はコード上じゃ伝わりにくいことがめちゃくちゃあって辛いよ～verso使いたいよ～
