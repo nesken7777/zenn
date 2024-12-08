@@ -122,7 +122,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 一旦`loop₁`にあるエラーは無視して、indexアクセスと`arr.swap`のエラーを気にします。
 
-### indexが範囲内にあるかどうかの証明
+### indexが範囲内にあることを証明する
 
 Infoviewに表示されているエラーはこちら
 
@@ -282,6 +282,8 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 んーさきに`rw`より下の`sorry`を無くしましょう。
 
+### `arr.size - (i + 1) < arr.size - i`を証明する
+
 この時点でのゴールと持っている仮定は以下のとおりです
 ```
 α : Type u_1
@@ -343,6 +345,9 @@ unknown identifier 'h'
 `(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`と設定しているゴールがそもそもよくないです！しかし試行錯誤の過程をそのまま写すためよくないゴールのまま進んでいきます
 :::
 ::::
+
+### `loop₂`が配列の大きさを変えないことを証明する
+
 まずとりあえず`loop₂`を定義に展開しましょう。[`unfold`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Unfold.html)[^4]を使います
 
 ```lean
@@ -449,7 +454,9 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 
 証明やり直しです(^-^)/
 
-じゃあまず帰納法使いたい訳なんですが、なんですが、`loop₂`は再帰のたびに`arr'`は変わるし`i`は変わんないし`j`は増えていきます。つまり単純に[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使うことが出来ません。そもそも`loop₂`はどうやって停止する再帰になっているかと言えば、`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり、`arr.size - 1 - i - j`が減少するわけです。だから
+### `loop₂`が配列の大きさを変えないことを証明する₂
+
+じゃあまず帰納法使いたい訳なんですが、**なんですが、**`loop₂`は再帰のたびに`arr'`は変わるし`i`は変わんないし`j`は増えていきます。つまり単純に[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使うことが出来ません。そもそも`loop₂`はどうやって停止する再帰になっているかと言えば、`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり、`arr.size - 1 - i - j`が減少するわけです。だから
 ```lean
 have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr.size) :
   (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size := by
@@ -473,11 +480,13 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 ```
 ⊢ (bubbleSort.loop₁.loop₂ (arr'.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
 ```
-というゴールは`arr'`ではなく`arr'.swap`した後の配列ですし、`j`は`j + 1`になってるので仮定を使って対応できません。
+というゴール(※今回遭遇するのに合わせて少し変えてます)は`arr'`は`arr'.swap`した後の配列ですし、`j`は`j + 1`になってるので仮定を使って対応できません。
 
 これに対応するため、`induction`には`generalizing`構文を使ってもう少し強力な仮定にします。
 
 とりあえず`arr'`と`i`と`j`を、`generalizing`を使って一般化しておきましょう[^5]
+
+これで帰納ケースで得られる仮定が`∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`になってくれました！
 
 現状こうなります
 
@@ -494,7 +503,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 
 まず`case zero`から
 
-```
+```lean
 case zero =>
   split
   case isTrue hlt => sorry
@@ -557,6 +566,8 @@ hlt : j < arr'.size - 1 - i
 ### `loop₂`はなんで停止することの証明が要らなかったの?
 
 ### どうやってそうなってることを知ったの?
+
+### `[Inhabited α]`と`[Ord α]`って何?
 
 ### for版を`#print`すると
 
