@@ -6,13 +6,17 @@ topics: ["lean", "lean4"]
 published: false
 ---
 
-この記事は証明支援系 Advent Calendar 202419日目の記事です
+この記事は証明支援系 Advent Calendar 2024 19日目の記事です
 
 https://adventar.org/calendars/10209
 
 Lean4は定理証明支援系かつ関数型プログラミング言語なんですが、今のところ日本語記事は定理証明に焦点を当ててるものがわりかし体感多い気がします(←ゴミみたいな保険かけ)
 
+だけど自分はプログラミング言語としてのLeanがめちゃんこ好きで、プログラミング言語としても流行ってほしいな～て強く思ってます
+
 なので、Leanでのプログラミングの勉強を始めてみたいなと思う人たちに向けて、これを書いてます
+
+対象読者は書かれたコードがなんとなくで読める方です
 
 ただのバブルソートといえどLeanの特徴がいろいろ出て奥深いんですよ！覚悟しておけ
 
@@ -309,7 +313,7 @@ loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size
 ```
 Try this: exact Nat.sub_succ_lt_self arr.size i h✝
 ```
-`Nat.sub_succ_lt_self (a i : Nat) (h : i < a) : a - (i + 1) < a - i`という定理が使えるようですね。ありがたく使わせていただきましょう
+`Nat.sub_succ_lt_self (a i : Nat) (h : i < a) : a - (i + 1) < a - i`という定理が使えるようですね。しかも[`apply`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Apply.html)ではなく[`exact`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Exact.html)で行けるようです。ありがたく使わせていただきましょう
 
 ```lean
   decreasing_by
@@ -456,7 +460,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 
 ### `loop₂`が配列の大きさを変えないことを証明する₂
 
-じゃあまず帰納法使いたい訳なんですが、**なんですが、**`loop₂`は再帰のたびに`arr'`は変わるし`i`は変わんないし`j`は増えていきます。つまり単純に[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使うことが出来ません。そもそも`loop₂`はどうやって停止する再帰になっているかと言えば、`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり、`arr.size - 1 - i - j`が減少するわけです。だから
+じゃあまず帰納法使いたい訳なんですが、**なんですが、**`loop₂`は再帰のたびに`arr'`は変わるし`i`は変わんないし`j`は増えていきます。つまり単純に[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使うことが出来ません。`induction i`でも`induction j`でもないんです。そもそも`loop₂`はどうやって停止する再帰になっているかと言えば、`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり、`arr.size - 1 - i - j`が減少するわけです。だから
 ```lean
 have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr.size) :
   (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size := by
@@ -476,7 +480,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 
 このように書けば、`hk`という名前で`arr'.size - 1 - i - j = 0`や`arr'.size - 1 - i - j = n + 1`が仮定として使えるようになります。
 
-ただちょっと待って！先のことを一旦考えます。このままでは帰納ケースで得られる仮定が`arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`であり、以前遭遇した`case h_1`のときの
+ただちょっと待って！先のことを一旦考えます。このままでは帰納ケースで得られる仮定が`ih : arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`であり、以前遭遇した`case h_1`のときの
 ```
 ⊢ (bubbleSort.loop₁.loop₂ (arr'.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
 ```
@@ -486,7 +490,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 
 とりあえず`arr'`と`i`と`j`を、`generalizing`を使って一般化しておきましょう[^5]
 
-これで帰納ケースで得られる仮定が`∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`になってくれました！
+これで帰納ケースで得られる仮定が`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`になってくれました！
 
 現状こうなります
 
@@ -516,6 +520,73 @@ hk : arr'.size - 1 - i - j = 0
 hlt : j < arr'.size - 1 - i
 ```
 の二つがあります。`arr'.size - 1 - i - j = 0`なのに`j < arr'.size - 1 - i`なのはおかしな話です。矛盾を示しましょう。
+
+ただ単に[`contradiction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Contradiction.html)を使おうとしても何かしらの真逆の仮定は持ち合わせていないので、失敗しちゃいます。`arr'.size - 1 - i - j ≠ 0`を作ってから`contradiction`しましょう。
+
+```lean
+case isTrue hlt =>
+  have hnez : arr'.size - 1 - i - j ≠ 0 := by sorry
+  contradiction
+```
+
+さて`hnez`をどうするかなんですが、まあ分かんなかったらとりあえず`apply?`しとけばいいんですよ
+
+```lean
+case isTrue hlt =>
+  have hnez : arr'.size - 1 - i - j ≠ 0 := by apply?
+  contradiction
+```
+```
+Try this: exact Nat.sub_ne_zero_iff_lt.mpr hlt
+```
+定理(`Nat.sub_ne_zero_iff_lt {n m : Nat} : n - m ≠ 0 ↔ m < n`)ありますね。使います
+```lean
+case isTrue hlt =>
+  have hnez : arr'.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
+  contradiction
+```
+`case isTrue`は証明完了！じゃ次は`case isFalse`です。ゴールは
+```
+⊢ arr'.size = arr.size
+```
+なので、`exact h_size`して終わりです
+
+これで`case zero`は証明完了です！
+```lean
+case zero =>
+  split
+  case isTrue hlt =>
+    have hnez : arr'.size - 1 - i - j ≠ 0 := by exact Nsub_ne_zero_iff_lt.mpr hlt
+    contradiction
+  case isFalse hnlt => exact h_size
+```
+残るは`case succ`ですね
+```lean
+case succ n ih =>
+  split
+  case isTrue hlt => sorry
+  case isFalse hnlt => exact h_size
+```
+`case isFalse`はさっきと同じなのでさっさと`exact h_size`しときます
+
+問題は`case isTrue`です。とりあえず`split`
+```lean
+case isTrue hlt =>
+  split
+  case h_1 => sorry
+  case h_2 => sorry
+  case h_3 => sorry
+```
+
+さて……問題の`case h_1`
+```
+⊢ (bubbleSort.loop₁.loop₂ (arr'.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
+```
+さっきは説明していませんでしたが、これは`match Ord.compare arr'[j] arr'[j + 1]`で`.gt`だった場合の分岐ですね。
+
+あの時とは違って、今の我々には仮定`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`を持っています！これを使って解決しましょう！
+
+
 
 \
 \
