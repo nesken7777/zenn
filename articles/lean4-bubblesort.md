@@ -550,7 +550,7 @@ case isTrue hlt =>
 ⊢ (bubbleSort.loop₁.loop₂ (arr.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
 ```
 
-ふむ。まあまあまあ今回は帰納法でやってるんで帰納ケースの仮定が——————
+ふむ。まあまあまあ今回は帰納法でやってるんで帰納ケースの仮定が――――――
 
 ```
 ih : arr.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr i j).size = arr.size
@@ -584,7 +584,9 @@ hk : arr.size - 1 - i - j = n + 1
 
 出てくる変数をもう少し一般化して、帰納法の仮定として使えるようにしておきましょう。
 
-でも特に当然だけど大事なのは、引数として渡される`arr`の大きさが変わってはいけないということです。
+でも特に当然だけど大事なのは、再帰によって次に引数として渡される配列は **`Array.swap`によって変化している可能性がある** ということです。よって左辺(`(bubbleSort.loop₁.loop₂ arr i j).size`)の`arr`と右辺(`arr.size`)の`arr`は別物として扱わなければなりません。ここからは左辺の配列を`arr'`としておきましょう。
+
+ただし、引数として渡される`arr'`ともともとの`arr`はその大きさが違うことはないということは重要です。
 
 よって新しく考える定理はこうなります:「任意の`arr'.size = arr.size`な`arr'`, `arr`と自然数`i`,`j`について、`(bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`」
 
@@ -648,7 +650,7 @@ case isTrue hlt =>
 
 あの時とは違って、今の我々には仮定`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`を持っています！これを使って解決しましょう！
 
-
+仮定`ih`は"任意の"`arr'`と`i`と`j`について言える話なので、これらは何にするか自分で選べるわけです
 
 \
 \
