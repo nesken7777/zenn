@@ -493,15 +493,15 @@ hlt : j < arr.size - 1 - i
 
 ```lean
 case isTrue hlt =>
-  have hnez : arr.size - 1 - i - j ≠ 0 := by sorry
+  have h_ne_z : arr.size - 1 - i - j ≠ 0 := by sorry
   contradiction
 ```
 
-さて`hnez`をどうするかなんですが、まあ分かんなかったらとりあえず`apply?`しとけばいいんですよ
+さて`h_ne_z`をどうするかなんですが、まあ分かんなかったらとりあえず`apply?`しとけばいいんですよ
 
 ```lean
 case isTrue hlt =>
-  have hnez : arr.size - 1 - i - j ≠ 0 := by apply?
+  have h_ne_z : arr.size - 1 - i - j ≠ 0 := by apply?
   contradiction
 ```
 ```
@@ -510,7 +510,7 @@ Try this: exact Nat.sub_ne_zero_iff_lt.mpr hlt
 定理[`Nat.sub_ne_zero_iff_lt {n m : Nat} : n - m ≠ 0 ↔ m < n`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.sub_ne_zero_iff_lt)ありますね。使います
 ```lean
 case isTrue hlt =>
-  have hnez : arr.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
+  have h_ne_z : arr.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
   contradiction
 ```
 これで`case isTrue`の証明が完了したので、`case zero`は証明完了です！うまくいっていますね
@@ -518,7 +518,7 @@ case isTrue hlt =>
 case zero =>
   split
   case isTrue hlt =>
-    have hnez : arr.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
+    have h_ne_z : arr.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
     contradiction
   case isFalse hnlt => rfl
 ```
@@ -629,7 +629,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 case zero =>
   split
   case isTrue hlt =>
-    have hnez : arr'.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
+    have h_ne_z : arr'.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
     contradiction
   case isFalse hnlt => exact h_size
 ```
@@ -666,9 +666,9 @@ case isTrue hlt =>
 
 あの時とは違って、今の我々には仮定`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`を持っています！これを使って解決しましょう！
 
-今の仮定`ih`は"任意の"`arr'`と`i`と`j`について言える話なので、これらは何にするか自分で決められるわけです
+今の仮定`ih`は"任意の"`arr'`と`i`と`j`について言える話なので、これらは何にするか自分で決められるわけです。今回の場合は`arr'`には`(arr'.swap j (j + 1))`を、`i`には`i`を、`j`には`(j + 1)`を指定します
 
-ただ少し面倒くさくなっている所があって、その自分で決めた`arr'`、`i`、`j`が`arr'.size = arr.size`や`arr'.size - 1 - i - j = n`を満たすことも証明しとかなければいけません。
+ただ少し面倒くさくなっている所があって、その自分で決めた`arr'`、`i`、`j`(今回の場合`arr'.swap j (j + 1)`、`i`、`(j + 1)`)が`arr'.size = arr.size`や`arr'.size - 1 - i - j = n`を満たすことも証明しとかなければいけません。
 
 `ih`の結論と今回のゴールが一致しているので、`apply ih`ができます
 
@@ -710,7 +710,7 @@ case h_1 =>
     rw[h_size_swap]
 ```
 
-さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Omega.html)が使えます！これくらいの証明なら`omega`ぶっぱで解決します
+さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Omega.html)が使えます！`omega`は自然数や整数の計算なら結構なんでもありに自動で証明してくれるタクティクです。これくらいの証明なら`omega`ぶっぱで解決します
 
 ```lean
 case h_1 =>
@@ -724,7 +724,7 @@ case h_1 =>
 
 ……いやーせっかくだし手で証明しません？^^;
 
-[`calc`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Calc.html)タクティクを使って`=`で繋いでいきます。
+[`calc`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Calc.html)を使って`=`で繋いでいきます。
 
 まず証明したい等式の左辺から
 ```lean
@@ -795,7 +795,7 @@ case isTrue hlt =>
 
 `loop₂_size_eq`のシグネチャがだいぶ変わったので、なんの`arr'`と`arr`と`i`と`j`で`rw`したいのか指定しなければいけません。
 
-もともと`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`を証明したかったわけなので、引数`arr'`,`arr`は`arr`を、引数`i`は`i`を、引数`j`には`0`を、そして`h_size`には`rfl`を指定します。
+もともと`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`を証明したかったわけなので、引数`arr'`,`arr`には`arr`を、引数`i`には`i`を、引数`j`には`0`を、そして`h_size`には`rfl`を指定します。
 
 ```lean
 decreasing_by
@@ -806,7 +806,9 @@ decreasing_by
   exact Nat.sub_succ_lt_self arr.size i h
 ```
 
-これで……！本当に……！`decreasing_by`の証明が完了しました！！！！！
+これで本当に`decreasing_by`の証明が完了しました！
+
+そしてこれにより……！`bubbleSort`の定義が……！完了しました！！！！！
 
 ## まとめ・コード全体を見る
 
@@ -835,7 +837,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
       case zero =>
         split
         case isTrue hlt =>
-          have hnez : arr'.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
+          have h_ne_z : arr'.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
           contradiction
         case isFalse hnlt => exact h_size
       case succ n ih =>
@@ -873,6 +875,12 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 全体で55行！バブルソート1つで55行！頑張りましたね！まあ2/3ほど証明に使ってますが
 
 ただ見誤らないで！55行もするのは甘えずに証明付きで書くことを頑張ったからであって、「Leanだとバブルソートに55行も書かされる」のではありません！
+
+他の大体の言語だと実行時エラーだったり未定義動作だったりOptionを返したりするindexアクセスを「必ずindexが範囲内にある」って保証したりとか、他の大体の言語だと無限ループする関数と必ず停止する関数の区別がつかないのを「この関数は必ず停止する」って言いきったりとか[^6]、**甘えなければ**Leanでそういうことができるんです。
+
+別に甘えてもいいんです。証明がだるかったら`def`に`partial`付けたっていいし、何なら`for`で書いたっていいんです。`arr[i]!`も使ったっていいんです。
+
+
 
 \
 \
@@ -954,3 +962,5 @@ Leanはコード上じゃ伝わりにくいことがめちゃくちゃあって�
 [^4]:[`dsimp`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Dsimp.html)はなぜか何も展開してくれませんでした……
 
 [^5]:ちなみに`arr`も`generalizing`してもいいですし`i`は別に`generalizing`しなくてもいいです。あと「使えない！」って騒いでた時も実は`j`だけは`generalizing`できます
+
+[^6]:でも`partial`はkokaの`div`エフェクトみたいに伝播しないからミスリーディング味ある
