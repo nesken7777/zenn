@@ -10,18 +10,18 @@ published: false
 
 https://adventar.org/calendars/10209
 
-Lean4は定理証明支援系かつ関数型プログラミング言語なんですが、今のところ日本語記事は定理証明に焦点を当ててるものがわりかし体感多い気がします(←ゴミみたいな保険かけ)
+Lean4は定理証明支援系かつ純粋関数型プログラミング言語なんですが、今のところ日本語記事は定理証明に焦点を当ててるものがわりかし体感多い気がします(←ゴミみたいな保険かけ)
 
-だけど自分はプログラミング言語としてのLeanがめちゃんこ好きで、プログラミング言語としても流行ってほしいな～て強く思ってます
+でもやっぱり依存型を持つプログラミング言語としてのLeanがめちゃんこ好きで、プログラミング言語としても流行ってほしいな～って願望がめちゃくちゃあります。
 
-なので、Leanでのプログラミングの勉強を始めてみたいなと思う人たちに向けて、これを書いてます
+なのでLeanでのプログラミングの勉強を始めてみたいって人たちとか、関数型プログラミング言語に興味ある人たちに、基本的なアルゴリズムであるバブルソートを通してLeanを知ってもらおうということで、これを書いてます。
 
-対象読者は書かれたコードがなんとなくで読める方です
+対象読者は書かれたコードがなんとなくで読める方です。[^なんとなく]
 
 ただのバブルソートといえどLeanの特徴がいろいろ出て奥深いんですよ！覚悟しておけ
 
 :::message
-2024/11/24に`Array.swap`のシグネチャを変更するコミットが入った( https://github.com/leanprover/lean4/pull/6194 )ので、nightly(2024-12-05)版を使用しています
+2024/11/24に`Array.swap`のシグネチャを変更するコミットが入った( https://github.com/leanprover/lean4/pull/6194 )ので、nightly(2024-12-12)版を使用しています
 :::
 
 :::message
@@ -45,7 +45,7 @@ def bubbleSort [Inhabited α] [Ord α] (arr : Array α) : Array α := Id.run do
 
 驚いただろ
 
-Leanは関数型言語ではあれど、do記法の中ならかなり手続き的に書くことができます！
+Leanは純粋関数型言語ではあれど、do記法の中ならかなり手続き的に書くことができます！
 
 具体的には、`else`のない`if`、早期リターン、`for`、`while`、果てには可変変数まで可能です。
 
@@ -60,7 +60,7 @@ https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
 \
 \
 \
-——————まあこれは茶番だ
+――――――まあこれは茶番だ
 
 ## 甘えるな
 
@@ -68,7 +68,7 @@ https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
 
 ね^^
 
-さっきの関数は「手続き的に書ける」って特徴が出てましたけど、手続き的に書いてるから関数型っぽくなくてつまんないし、Leanのメインの強みである境界チェックもできてないし[^1]。
+さっきの関数は「手続き的に書ける」って特徴が出てましたけど、手続き的に書いてるから関数型っぽくなくてつまんないし、Leanのメインの強みである境界チェックもできてないし[^forで証明できない]。
 
 というわけでね、さっきの関数をほぼそのまま末尾再帰で書き直します。
 
@@ -80,7 +80,7 @@ https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
 def bubbleSort [Ord α] (arr : Array α) : Array α := _
 ```
 
-`Array α`は固定長配列というよりかはRustの`Vec<T>`のようなもので大きさは動的に変化します[^2]
+`Array α`は固定長配列というよりかはRustの`Vec<T>`のようなもので大きさは動的に変化します[^Vectorについて]
 
 次に外側のループを回すので、こう
 ```lean
@@ -156,7 +156,7 @@ failed to prove index is valid, possible solutions:
 
 これらのエラーが言ってる通り、配列への**普通の**indexアクセスにはindexが配列の範囲内であることの証明が必要になります。
 
-エラーにも書いてありますが、`arr[j]!`と書けば範囲外の時にパニックさせたり[^3]、`arr[j]?`と書けば`Option α`として取り出したりすることもできますが、ここは証明で行きましょう！Leanの強みの見せどころです！
+エラーにも書いてありますが、`arr[j]!`と書けば範囲外の時にパニックさせたり[^get!について]、`arr[j]?`と書けば`Option α`として取り出したりすることもできますが、ここは証明で行きましょう！Leanの強みの見せどころです！
 
 まずなぜ`j`と`j + 1`が範囲内にあると確信できるのかと言えば、ifの条件`j < arr.size - 1 - i`を通ったからですね。
 
@@ -168,7 +168,7 @@ if h_index : j < arr.size - 1 - i then
 
 このように書けば、`h_index`という名前で`j < arr.size - 1 - i`の証明が取れます。
 
-さらにさらに、Leanはめちゃくちゃ賢いのでこの証明があるだけで`j`も`j + 1`も配列の範囲内だと認めてくれちゃいます！
+さらにさらに、Leanはめちゃくちゃ賢い[^厳密にはエラボレータ]のでこの証明があるだけで`j`も`j + 1`も配列の範囲内だと認めてくれちゃいます！
 
 `arr.swap`も同じ問題なので、こっちのエラーも解決してくれます
 
@@ -209,7 +209,7 @@ The arguments relate at each recursive call as follows:
 Please use `termination_by` to specify a decreasing measure.
 ```
 
-Leanでは(`partial def`でも`unsafe def`でもなく)`def`で定義された関数は関数が停止することを保証しなければなりません。このエラーは、「`loop₁`が停止することを証明できなかった」と言っているので、こちら側で停止することを証明する必要があります。
+Leanでは(`partial def`でも`unsafe def`でもなく)`def`で定義された関数は関数が停止することを保証しなければなりません。[^関数の停止について]このエラーは、「`loop₁`が停止することを証明できなかった」と言っているので、こちら側で停止することを証明する必要があります。
 
 停止することの証明には、`termination_by`を使います。この`termination_by`に、「再帰することで減少するもの」を指定してあげればよいです。
 
@@ -288,7 +288,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 ### `arr.size - (i + 1) < arr.size - i`を証明する
 
-この時点でのゴールと持っている仮定は以下のとおりです
+この時点でのゴールと持っている仮定[^仮定と呼んで良いのか]は以下のとおりです
 ```
 α : Type u_1
 inst✝ : Ord α
@@ -352,7 +352,7 @@ decreasing_by
 
 ### `loop₂`が配列の大きさを変えないことを証明する
 
-まずとりあえず`loop₂`を定義に展開しましょう。[`unfold`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Unfold.html)[^4]を使います
+まずとりあえず`loop₂`を定義に展開しましょう。[`unfold`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Unfold.html)[^dsimpが効かない]を使います
 
 ```lean
 decreasing_by
@@ -609,7 +609,7 @@ have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr
 
 これに対応するため、`induction`には`generalizing`構文を使ってもう少し強力な仮定にします。
 
-とりあえず`arr'`と`i`と`j`を、`generalizing`を使って一般化しておきましょう[^5]
+とりあえず`arr'`と`i`と`j`を、`generalizing`を使って一般化しておきましょう[^generalizingの細かいこと]
 
 ```lean
 have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr.size) :
@@ -793,7 +793,7 @@ case isTrue hlt =>
 
 これで`decreasing_by`の証明が……！？まだ終わりませ～ん^^
 
-`loop₂_size_eq`のシグネチャがだいぶ変わったので、なんの`arr'`と`arr`と`i`と`j`で`rw`したいのか指定しなければいけません。
+`loop₂_size_eq`のシグネチャがだいぶ変わったので、何の`arr'`と`arr`と`i`と`j`で`rw`したいのか指定しなければいけません。
 
 もともと`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`を証明したかったわけなので、引数`arr'`,`arr`には`arr`を、引数`i`には`i`を、引数`j`には`0`を、そして`h_size`には`rfl`を指定します。
 
@@ -876,91 +876,132 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 ただ見誤らないで！55行もするのは甘えずに証明付きで書くことを頑張ったからであって、「Leanだとバブルソートに55行も書かされる」のではありません！
 
-他の大体の言語だと実行時エラーだったり未定義動作だったりOptionを返したりするindexアクセスを「必ずindexが範囲内にある」って保証したりとか、他の大体の言語だと無限ループする関数と必ず停止する関数の区別がつかないのを「この関数は必ず停止する」って言いきったりとか[^6]、**甘えなければ**Leanでそういうことができるんです。
+別に甘えてもいいんです。証明がだるかったら`def`に`partial`付けたっていいし、何なら`for`で書いたっていいんです。`arr[i]!`だって使っていいんです。
 
-別に甘えてもいいんです。証明がだるかったら`def`に`partial`付けたっていいし、何なら`for`で書いたっていいんです。`arr[i]!`も使ったっていいんです。
+他の大体の言語だと実行時エラーだったり未定義動作だったりOptionを返したりするindexアクセスを「必ずindexが範囲内にある」って保証したりとか、他の大体の言語だと無限ループする関数と必ず停止する関数の区別がつかないのを「この関数は必ず停止する」って言いきったりとか[^partialは伝播しない]、**頑張れば**Leanでそういうことができるんです。だからLeanが好きなんです。
 
+それ以外にもLeanの好きなところはいろいろあるんですけども(メタプログラミングとそれに伴う書き方の自由さとか)
 
-
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
+とりあえずこれでバブルソートの解説は以上です！
 
 ## ちなみに
 
-折りたたむやつ使うとページ内検索に支障が出るのでここに補足情報全部書きます
+余談です
 
-### `if`で書かないの?
-
-### 結局indexアクセスと`arr.swap`の証明ってどうなってるの?
-
-### `loop₂`はなんで停止することの証明が要らなかったの?
-
-### どうやってそうなってることを知ったの?
 
 ### `[Inhabited α]`と`[Ord α]`って何?
 
-### for版を`#print`すると
+_instance implicit_ と呼ばれる、Leanがインスタンス探索の仕事をする引数です([Theorem Proving in Lean 4の日本語訳](https://aconite-ac.github.io/theorem_proving_in_lean4_ja/type_classes.html)では"インスタンス暗黙引数"、[Functional Programming in Leanの日本語訳](https://lean-ja.github.io/fp-lean-ja/type-classes/polymorphism.html)では"暗黙のインスタンス"と呼ばれる)
 
-### for文で証明を取ろうとしても
+役割は型クラス制約と同じです
 
-### 以前の`Array.swap`のシグネチャ
+[`[Ord α]`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Ord.html#Ord)は見てきた通り`Ord.compare`ができるようにするための型クラスです。
+
+[`[Inhabited α]`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Inhabited)はただ「デフォルト値がある」ことを示すだけの型クラスなんですが、なぜ`arr[i]!`の時には必要になるかというと「`arr[i]!`が必ず`α`を返す」という取り決めの論理的整合性を保つためです。範囲外エラーの際は、実際の挙動はエラーメッセージが出ることですが、コードの見かけ上は`default`が返されます
+
+### `if`で書かないの?
+
+普通`if arr[j] > arr[j + 1] then`って書くところをなんでわざわざ`Ord.compare arr[j] arr[j + 1]`にしてんの？って話なんですが、`if`で書くと必要な型クラス制約がちょっと変わってきます。まず`a < b`の書き方を許すために`[LT α]`が必要です。そして`if`の条件部分は命題(`Prop`)を書くのですがこの命題が決定可能である必要があります。今回の場合だと、「任意の`α`の値`a`,`b`について、`a > b`が決定可能」が要求されるので、`[∀(a b : α), Decidable (a > b)]`が必要になります。
+
+:::details 具体的なコード
+```lean
+def bubbleSortif [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) : Array α :=
+  let rec loop₁ [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) (i : Nat) : Array α :=
+    let rec loop₂ [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) (i : Nat) (j : Nat) : Array α :=
+      if h_index : j < arr.size - 1 - i then
+        if arr[j] > arr[j + 1] then
+          loop₂ (arr.swap j (j + 1)) i (j + 1)
+        else
+          loop₂ arr i (j + 1)
+      else
+        arr
+    if i < arr.size then
+      loop₁ (loop₂ arr i 0) (i + 1)
+    else
+      arr
+  termination_by arr.size - i
+  decreasing_by
+    /- 省略 -/
+  loop₁ arr 0
+```
+:::
+
+### 結局indexアクセスと`arr.swap`の証明ってどうなってるの?
+
+[`get_elem_tactic`](https://leanprover-community.github.io/mathlib4_docs/Init/Tactics.html#tacticGet_elem_tactic)が自動で使われています。まず欲しいゴールと一致する仮定があるかどうか探してから、そのあと`tirivial`や`simp`とかを試して、それでも失敗した場合は`omega`をぶちかましてます
+
+### `loop₂`はなんで停止することの証明が要らなかったの?
+
+[`decreasing_tactic`](https://leanprover-community.github.io/mathlib4_docs/Init/WFTactics.html#tacticDecreasing_tactic)が自動で使われています。`decreasing_tactic`の方もいろいろできないか試しますが結局最後に`omega`をかまします
+
+### どうやってそうなってることを知ったの?
+
+Leanには`set_option`というコマンドがあり、この中の`trace.Elab.step`や`trace.Elab.definition.wf`を`true`にすると確認できます。`trace`系オプションはLeanがどうエラボレーションするのか知るのに重宝します
+
+### for版でindexが範囲内にあることを証明しようとした
+
+一応for版でも以下のように書けば証明項が取れます
+```lean
+def bubbleSort [Inhabited α] [Ord α] (arr : Array α) : Array α := Id.run do
+  let mut arr := arr
+  for h₁ : i in [0:arr.size] do
+    for h₂ : j in [0:arr.size - 1 - i] do
+      match Ord.compare arr[j] arr[j + 1] with
+      |.gt => arr := arr.swap j (j + 1)
+      |.lt |.eq => pure ()
+  arr
+```
+
+これで`h₁ : i ∈ col✝¹`と`h₂ : j ∈ col✝`という2つの証明項が取れ、この証明から[`Membership.mem.upper {i : Nat} {r : Std.Range} (h : i ∈ r) : i < r.stop`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Range.html#Membership.mem.upper)という定理が使えるのでいけそうに見えるのですが、厄介なことになっています。持っている仮定は
+```
+arr✝² : Array α
+arr✝¹ : Array α := arr✝²
+col✝¹ : Std.Range := { start := 0, stop := arr✝¹.size, step := 1 }
+i : Nat
+h₁ : i ∈ col✝¹
+r✝¹ : Array α
+arr✝ : Array α := r✝¹
+col✝ : Std.Range := { start := 0, stop := arr✝.size - 1 - i, step := 1 }
+j : Nat
+h₂ : j ∈ col✝
+r✝ : Array α
+arr : Array α := r✝
+```
+となっており、forを経るごとに`arr`が別のものとして認識されてしまいます。特に`arr✝².size`と`r✝¹.size`が一致すること、`r✝¹.size`と`r✝.size`が一致することの証明がどう持てばいいかが分からなくて断念しています……助けてください
 
 ## 小ネタ
 
-Error Lens入れるといいよ
+VSCodeの拡張機能の[Error Lens](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens)はLeanと相性抜群だと思います。
+
+特に`#eval`や`#check`は書いた行と同じところに結果が出力されるのですぐに確認できます
+
+![](/images/articles/lean4-bubblesort/eval.png)
 
 ## 戯言
 
-Leanのシンタックスハイライト早く欲しいよ～
+まだLeanのシンタックスハイライトが効いてないからコードブロックがめちゃめちゃ見づらくなってる……エラーも無地だから区別も付きにくい……
 
-エラー表示用のコードブロックも欲しいよ～
+Prism.jsさんお願いします(https://github.com/PrismJS/prism/pull/3765)
 
-Leanはコード上じゃ伝わりにくいことがめちゃくちゃあって辛いよ～verso使いたいよ～
+Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコード面だけじゃ伝わりにくいことが多いから個人サイトで[verso](https://github.com/leanprover/verso)使う方がいいってのは、ある　ただ個人サイト持っていないからversoが使えるサイトが欲しいよ～
 
-[^1]:四苦八苦した挙句諦めました……
+[^なんとなく]:Leanがある程度分かってたり、全く知らなくてもこれまでの経験から読めたりするくらいの感じです
 
-[^2]:[Vector](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Vector/Basic.html)はそれはそれで別であります
+[^forで証明できない]:四苦八苦した挙句諦めました……
 
-[^3]: 代償?として`[Inhabited α]`が必要 \
+[^Vectorについて]:[Vector](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Vector/Basic.html)はそれはそれで別であります
+
+[^get!について]: 代償?として`[Inhabited α]`が必要 \
       forを使った関数の方はこっちを使ってた
 
-[^4]:[`dsimp`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Dsimp.html)はなぜか何も展開してくれませんでした……
+[^関数の停止について]:なぜ停止することが必要なのかの詳細は、ここに書いてあります:https://lean-lang.org/blog/2024-1-11-recursive-definitions-in-lean/
 
-[^5]:ちなみに`arr`も`generalizing`してもいいですし`i`は別に`generalizing`しなくてもいいです。あと「使えない！」って騒いでた時も実は`j`だけは`generalizing`できます
+[^dsimpが効かない]:[`dsimp`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Dsimp.html)はなぜか何も展開してくれませんでした……
 
-[^6]:でも`partial`はkokaの`div`エフェクトみたいに伝播しないからミスリーディング味ある
+[^generalizingの細かいこと]:ちなみに`arr`も`generalizing`してもいいですし`i`は別に`generalizing`しなくてもいいです。あと「使えない！」って騒いでた時も実は`j`だけは`generalizing`できます
+
+[^partialは伝播しない]:でも`partial`はkokaの`div`エフェクトみたいに伝播しないからミスリーディング味ある
+
+[^厳密にはエラボレータ]:多分厳密には「Leanのエラボレータ」だと思うのですが、聞きなじみのない言葉でごちゃごちゃしちゃいそうなので「Lean」にしておいてます！ごめん
+
+[^仮定と呼んで良いのか]:「今持っているもの」の用語が分からないので「仮定」と呼んじゃってます…誰か正確な名前があれば教えてください
