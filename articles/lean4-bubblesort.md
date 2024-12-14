@@ -3,7 +3,8 @@ title: "Lean4でバブルソートを書く"
 emoji: "🔄"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["lean", "lean4"]
-published: false
+published: true
+published_at: 2024-12-19 00:00
 ---
 
 この記事は証明支援系 Advent Calendar 2024 19日目の記事です
