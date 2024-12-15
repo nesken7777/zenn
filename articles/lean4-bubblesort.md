@@ -52,7 +52,42 @@ Leanは純粋関数型言語ではあれど、do記法の中ならかなり手�
 
 https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
 
+これら手続き的な書き方は全て、最終的に全て関数呼び出しの形に変換されます。
+
+:::details 最終的な関数呼び出しの形
+```lean
+def bubbleSort : {α : Type} → [inst : Inhabited α] → [inst : Ord α] → Array α → Array α :=
+fun {α} [Inhabited α] [Ord α] arr =>
+  (let arr := arr;
+    bind
+      (let col := { start := 0, stop := arr.size, step := 1 };
+      forIn col arr fun i r =>
+        let arr := r;
+        bind
+          (let col := { start := 0, stop := HSub.hSub (HSub.hSub arr.size 1) i, step := 1 };
+          forIn col arr fun j r =>
+            let arr := r;
+            bubbleSort.match_1 (fun x => Id (ForInStep (Array α)))
+              (compare (getElem! arr j) (getElem! arr (HAdd.hAdd j 1)))
+              (fun _ =>
+                let arr := arr.swapIfInBounds j (HAdd.hAdd j 1);
+                bind (pure PUnit.unit) fun x => pure (ForInStep.yield arr))
+              (fun _ => bind (pure Unit.unit) fun x => pure (ForInStep.yield arr)) fun _ =>
+              bind (pure Unit.unit) fun x => pure (ForInStep.yield arr))
+          fun r =>
+          let arr := r;
+          bind (pure PUnit.unit) fun x => pure (ForInStep.yield arr))
+      fun r =>
+      let arr := r;
+      arr).run
+```
+:::
+
 モナドで付け足したい効果が特にない場合であっても、`Id`モナドを使えばいつでもこの記法が使えます。
+
+\
+\
+\
 \
 \
 \
@@ -331,7 +366,7 @@ unknown identifier 'h'
 
 え？( `-´ #)せっかく使ったのになめとんのか
 
-この`h`とやらは`h✝ : i < arr.size`の`h`ですね。Infoviewで変数名に`✝`が付いたものはアクセス不能になってしまったものです。[`rename_i`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/RenameI.html)を使えば名前を付けて復帰できます。
+この`h`とやらは`h✝ : i < arr.size`の`h`ですね。Infoview上で変数名に`✝`が付いたものはアクセス不能になってしまったものです。[`rename_i`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/RenameI.html)を使えば名前を付けて復帰できます。[^rename_i無しでも行ける]
 
 ```lean
 decreasing_by
@@ -879,11 +914,30 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 別に甘えてもいいんです。証明がだるかったら`def`に`partial`付けたっていいし、何なら`for`で書いたっていいんです。`arr[i]!`だって使っていいんです。(**✝甘えるな✝**とか言ってたら流行らせられない)
 
-他の大体の言語だと実行時エラーだったり未定義動作だったりOptionを返したりするindexアクセスを「必ずindexが範囲内にある」って保証したりとか、他の大体の言語だと無限ループする関数と必ず停止する関数の区別がつかないのを「この関数は必ず停止する」って言いきったりとか[^partialは伝播しない]、**頑張れば**Leanでそういうことができるんです。だからLeanが好きなんです。
+他の大体の言語だと実行時エラーだったり未定義動作だったりOptionを返したりするindexアクセスを「必ずindexが範囲内にある」って保証したりとか、他の大体の言語だと無限ループする関数と必ず停止する関数の区別がつかないのを「この関数は必ず停止する」って言いきったりとか[^partialは伝播しない]、**頑張れば**Leanでそういうことができるんです。だからLeanが好きなんです。[^他の依存型言語]
 
-それ以外にもLeanの好きなところはいろいろあるんですけども(メタプログラミングとそれに伴う書き方の自由さとか)
+それ以外にもLeanの好きなところはいろいろあるんですけども(メタプログラミングとそれに伴う書き方の自由さとかInfoviewとか)
 
 とりあえずこれでバブルソートの解説は以上です！
+
+## 最後に
+
+今関数型を学び始めるならLeanがオススメ！日本語のガイド本もいろいろ揃ってます！
+
+https://lean-ja.github.io/lean-by-example/
+
+https://lean-ja.github.io/fp-lean-ja/
+
+https://aconite-ac.github.io/theorem_proving_in_lean4_ja/
+
+https://lean-ja.github.io/lean4-metaprogramming-book-ja/
+
+https://lean-ja.github.io/type_checking_in_lean4_ja/
+
+https://lean-ja.github.io/mathematics_in_lean_source/
+
+https://lean-ja.github.io/reference-manual-ja/
+(Language Referenceは(原文と同様に)途中)
 
 ## ちなみに
 
@@ -922,7 +976,7 @@ def bubbleSortif [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) : 
       arr
   termination_by arr.size - i
   decreasing_by
-    /- 省略 -/
+    /- 省略 (証明できます！) -/
   loop₁ arr 0
 ```
 :::
@@ -982,7 +1036,8 @@ VSCodeの拡張機能の[Error Lens](https://marketplace.visualstudio.com/items?
 
 まだLeanのシンタックスハイライトが効いてないからコードブロックがめちゃめちゃ見づらくなってる……エラーも無地だから区別も付きにくい……
 
-Prism.jsさんお願いします(https://github.com/PrismJS/prism/pull/3765)
+Prism.jsさんお願いします(https://github.com/PrismJS/prism/pull/3765)\
+と思ったけど、開発止まってる……？
 
 Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコード面だけじゃ伝わりにくいことが多いから個人サイトで[verso](https://github.com/leanprover/verso)使う方がいいってのは、ある　ただ個人サイト持っていないからversoが使えるサイトが欲しいよ～
 
@@ -1006,3 +1061,7 @@ Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコ�
 [^厳密にはエラボレータ]:多分厳密には「Leanのエラボレータ」だと思うのですが、聞きなじみのない言葉でごちゃごちゃしちゃいそうなので「Lean」にしておいてます！ごめん
 
 [^仮定と呼んで良いのか]:「今持っているもの」の用語が分からないので「仮定」と呼んじゃってます…誰か正確な名前があれば教えてください
+
+[^rename_i無しでも行ける]:別にプログラムを書いてる時点で`if h : i < arr.size then`と書けば`rename_i`は無しでもいけます
+
+[^他の依存型言語]:※他の依存型持ってる言語に触れたことが無いだけ
