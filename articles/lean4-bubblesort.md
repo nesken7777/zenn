@@ -922,7 +922,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 ## 最後に
 
-今関数型を学び始めるならLeanがオススメ！日本語のガイド本もいろいろ揃ってます！
+今関数型言語を学び始めるならLeanがオススメ！日本語のガイド本もいろいろ揃ってます！
 
 https://lean-ja.github.io/lean-by-example/
 
