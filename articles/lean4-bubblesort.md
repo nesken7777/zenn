@@ -15,18 +15,18 @@ Lean4は定理証明支援系かつ純粋関数型プログラミング言語な
 
 でもやっぱり依存型を持つプログラミング言語としてのLeanがめちゃんこ好きで、プログラミング言語としても流行ってほしいな～って願望がめちゃくちゃあります。
 
-なのでLeanでのプログラミングの勉強を始めてみたいって人たちとか、関数型プログラミング言語に興味ある人たちに、基本的なアルゴリズムであるバブルソートを通してLeanを知ってもらおうということで、これを書いてます。
+なのでLeanでのプログラミングの勉強を始めてみたいって人たちとか、関数型プログラミング言語に興味ある人たちに、基本的なアルゴリズムであるバブルソートを通してLeanを知ってもらおうということでこれを書いてます。
 
 対象読者は書かれたコードがなんとなくで読める方です。[^なんとなく]
 
 ただのバブルソートといえどLeanの特徴がいろいろ出て奥深いんですよ！覚悟しておけ
 
 :::message
-2024/11/24に`Array.swap`のシグネチャを変更するコミットが入った( https://github.com/leanprover/lean4/pull/6194 )ので、nightly(2024-12-12)版を使用しています
+2024/11/24に`Array.swap`のシグネチャを変更するコミットが入った( https://github.com/leanprover/lean4/pull/6194 )のでnightly(2024-12-12)版を使用しています
 :::
 
 :::message
-引用するLeanのドキュメントは、日本語訳がある場合はそちらを優先します
+引用するLeanのドキュメントは日本語訳がある場合はそちらを優先します
 :::
 
 ## 書く
@@ -46,13 +46,13 @@ def bubbleSort [Inhabited α] [Ord α] (arr : Array α) : Array α := Id.run do
 
 驚いただろ
 
-Leanは純粋関数型言語ではあれど、do記法の中ならかなり手続き的に書くことができます！
+Leanは純粋関数型言語ではあれどdo記法の中ならかなり手続き的に書くことができます！
 
-具体的には、`else`のない`if`、早期リターン、`for`、`while`、果てには可変変数まで可能です。
+具体的には`else`のない`if`、早期リターン、`for`、`while`、果てには可変変数まで可能です。
 
 https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
 
-これら手続き的な書き方は全て、最終的に全て関数呼び出しの形に変換されます。
+これら手続き的な書き方は全て最終的に全て関数呼び出しの形に変換されます。
 
 :::details 最終的な関数呼び出しの形
 ```lean
@@ -83,7 +83,7 @@ fun {α} [Inhabited α] [Ord α] arr =>
 ```
 :::
 
-モナドで付け足したい効果が特にない場合であっても、`Id`モナドを使えばいつでもこの記法が使えます。
+モナドで付け足したい効果が特にない場合であっても`Id`モナドを使えばいつでもこの記法が使えます。
 
 \
 \
@@ -104,13 +104,13 @@ fun {α} [Inhabited α] [Ord α] arr =>
 
 ね^^
 
-さっきの関数は「手続き的に書ける」って特徴が出てましたけど、手続き的に書いてるから関数型っぽくなくてつまんないし、Leanのメインの強みである境界チェックもできてないし[^forで証明できない]。
+さっきの説明は「Leanは純粋関数型言語だけどかなり手続き的に書ける」ってことしか伝わってこないし、Leanのメインの強みである境界チェックもできてないし[^forで証明できない]。
 
 というわけでね、さっきの関数をほぼそのまま末尾再帰で書き直します。
 
-さっきのは茶番なので軽く説明をすっ飛ばしましたが、ここからは一つ一つ解説します。冗長かも。
+さっきのは茶番なので軽く説明をすっ飛ばしましたがここからは一つ一つ解説します。冗長かも。
 
-まずシグネチャを考えます。型`α`は比較できて、その`α`型の要素の配列を受け取り、ソートした配列を返すので、こう
+まずシグネチャを考えます。型`α`[^Unicodeで書く]は比較できて、その`α`型の要素の配列を受け取り、ソートした配列を返すので、こう
 
 ```lean
 def bubbleSort [Ord α] (arr : Array α) : Array α := _
@@ -160,7 +160,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 この時点で4箇所エラーが出てます
 ![](/images/articles/lean4-bubblesort/error1.png)
 
-一旦`loop₁`にあるエラーは無視して、indexアクセスと`arr.swap`のエラーを気にします。
+一旦`loop₁`にあるエラーは無視してindexアクセスと`arr.swap`のエラーを気にします。
 
 ### indexが範囲内にあることを証明する
 
@@ -192,7 +192,7 @@ failed to prove index is valid, possible solutions:
 
 これらのエラーが言ってる通り、配列への**普通の**indexアクセスにはindexが配列の範囲内であることの証明が必要になります。
 
-エラーにも書いてありますが、`arr[j]!`と書けば範囲外の時にパニックさせたり[^get!について]、`arr[j]?`と書けば`Option α`として取り出したりすることもできますが、ここは証明で行きましょう！Leanの強みの見せどころです！
+エラーにも書いてありますが`arr[j]!`と書けば範囲外の時にパニックさせたり[^get!について]`arr[j]?`と書けば`Option α`として取り出したりすることもできますが、ここは証明で行きましょう！Leanの強みの見せどころです！
 
 まずなぜ`j`と`j + 1`が範囲内にあると確信できるのかと言えば、ifの条件`j < arr.size - 1 - i`を通ったからですね。
 
@@ -202,13 +202,13 @@ failed to prove index is valid, possible solutions:
 if h_index : j < arr.size - 1 - i then
 ```
 
-このように書けば、`h_index`という名前で`j < arr.size - 1 - i`の証明が取れます。
+このように書けば`h_index`という名前で`j < arr.size - 1 - i`の証明が取れます。
 
 さらにさらに、Leanはめちゃくちゃ賢い[^厳密にはエラボレータ]のでこの証明があるだけで`j`も`j + 1`も配列の範囲内だと認めてくれちゃいます！
 
-`arr.swap`も同じ問題なので、こっちのエラーも解決してくれます
+`arr.swap`も同じ問題なのでこっちのエラーも解決してくれます
 
-なので"証明"といっても、Leanの賢さによって解決されちゃうんですね
+なので"証明"といってもLeanの賢さによって解決されちゃうんですね
 
 現状のエラー状況はこうなります
 
@@ -245,11 +245,11 @@ The arguments relate at each recursive call as follows:
 Please use `termination_by` to specify a decreasing measure.
 ```
 
-Leanでは(`partial def`でも`unsafe def`でもなく)`def`で定義された関数は関数が停止することを保証しなければなりません。[^関数の停止について]このエラーは、「`loop₁`が停止することを証明できなかった」と言っているので、こちら側で停止することを証明する必要があります。
+Leanでは(`partial def`でも`unsafe def`でもなく)`def`で定義された関数は関数が停止することを保証しなければなりません。[^関数の停止について]このエラーは「`loop₁`が停止することを証明できなかった」と言っているのでこちら側で停止することを証明する必要があります。
 
-停止することの証明には、`termination_by`を使います。この`termination_by`に、「再帰することで減少するもの」を指定してあげればよいです。
+停止することの証明には`termination_by`を使います。この`termination_by`に「再帰することで減少するもの」を指定してあげればよいです。
 
-再帰がいつ止まるかと言えば、`i < arr.size`の条件に通らなかった場合なので、`arr.size - i`が0に向かって減少する関係と言えます。
+再帰がいつ止まるかと言えば`i < arr.size`の条件に通らなかった場合なので、`arr.size - i`が0に向かって減少する関係と言えます。
 
 実際Leanも「`arr.size - i`かなー?」って言って諦めてます
 
@@ -301,9 +301,9 @@ h✝ : i < arr.size
 
 「`(bubbleSort.loop₁.loop₂ arr i 0).size - (i + 1) < arr.size - i`の証明をしなさいよ」と言われていますね。Leanはこの証明を諦めたわけです。
 
-これの証明には、`decreasing_by`を使います。
+これの証明には`decreasing_by`を使います。
 
-さて、`arr.size - (i + 1) < arr.size - i`なのは当然なのですが、今回示さなければならないのは`(bubbleSort.loop₁.loop₂ arr i 0).size - (i + 1) < arr.size - i`です。`loop₂`が`arr`の大きさを変えることは無いから`arr.size`に書き換えたいんだけどなぁ……
+さて`arr.size - (i + 1) < arr.size - i`なのは当然なのですが、今回示さなければならないのは`(bubbleSort.loop₁.loop₂ arr i 0).size - (i + 1) < arr.size - i`です。`loop₂`が`arr`の大きさを変えることは無いから`arr.size`に書き換えたいんだけどなぁ……
 
 とここで[`rw`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Rw.html)が使えます。`loop₂`によって`arr`の大きさが変わらないこと(`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`)を示せば、この`rw`タクティクによってゴールを`arr.size - (i + 1) < arr.size - i`に書き換えて簡単に証明できます。
 
@@ -319,6 +319,8 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
     sorry
   loop₁ arr 0
 ```
+
+[`have`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Have.html)は`let`とほぼ同じです。使い分けはあんまり考えてなく、証明だったらとりあえず`have`、値だったらとりあえず`let`にしてます。
 
 んーさきに`rw`より下の`sorry`を無くしましょう。
 
@@ -461,7 +463,7 @@ case isTrue =>
 
 また`unfold`する……?いやいや、帰納法を使いましょう。
 
-振り出しに戻ったのは、再帰しているからで、再帰しているなら、帰納法を使って証明するものです。[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使った方法で証明をやり直しましょう。
+振り出しに戻ったのは再帰しているからで、再帰しているなら帰納法を使って証明するものです。[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使った方法で証明をやり直しましょう。
 
 ### `loop₂`が配列の大きさを変えないことを証明する₂
 
@@ -469,7 +471,7 @@ case isTrue =>
 
 じゃあなんなのか。そもそも`loop₂`はどうやって停止する再帰になっているかを考えましょう。
 
-`loop₂`は`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり、`arr.size - 1 - i - j`が減少するわけです。だから
+`loop₂`は`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり`arr.size - 1 - i - j`が減少するわけです。だから
 
 ```lean
 have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by
@@ -483,7 +485,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
   induction (arr.size - i - 1 - j)
 ```
 
-でこうなるんですが、こう書いたところで、残念ながら都合よく`arr.size - 1 - i - j = 0`や`arr.size - 1 - i - j = n + 1`のような仮定をもらうことができません！
+でこうなるんですが、残念ながらこう書いたところで都合よく`arr.size - 1 - i - j = 0`や`arr.size - 1 - i - j = n + 1`のような仮定をもらうことができません！
 
 じゃあどうすればこの仮定がもらえるのか……というと、[`generalize`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Generalize.html)を使えばいけます
 
@@ -493,7 +495,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
   induction k
 ```
 
-このように書けば、`hk`という名前で`arr.size - 1 - i - j = 0`や`arr.size - 1 - i - j = n + 1`が仮定として使えるようになります。
+このように書けば`hk`という名前で`arr.size - 1 - i - j = 0`や`arr.size - 1 - i - j = n + 1`が仮定として使えるようになります。
 
 現状こうなります
 
@@ -525,7 +527,7 @@ hlt : j < arr.size - 1 - i
 ```
 の二つがあります。`arr.size - 1 - i - j = 0`なのに`j < arr.size - 1 - i`なのはおかしな話です。矛盾を示しましょう。
 
-ただ単に[`contradiction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Contradiction.html)を使おうとしても何かしらの真逆の仮定は持ち合わせていないので、失敗しちゃいます。`arr.size - 1 - i - j ≠ 0`を作ってから`contradiction`しましょう。
+ただ単に[`contradiction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Contradiction.html)を使おうとしても何かしらの真逆の仮定は持ち合わせていないので失敗しちゃいます。`arr.size - 1 - i - j ≠ 0`を作ってから`contradiction`しましょう。
 
 ```lean
 case isTrue hlt =>
@@ -549,7 +551,7 @@ case isTrue hlt =>
   have h_ne_z : arr.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
   contradiction
 ```
-これで`case isTrue`の証明が完了したので、`case zero`は証明完了です！うまくいっていますね
+これで`case isTrue`の証明が完了したので`case zero`は証明完了です！うまくいっていますね
 ```lean
 case zero =>
   split
@@ -567,9 +569,9 @@ case succ n ih =>
   case isFalse hnlt => rfl
 ```
 
-`case isFalse`は、一応`hk : arr'.size - 1 - i - j = n + 1`で`hnlt : ¬j < arr'.size - 1 - i`なのは矛盾しているのですが、`rfl`って言った方が簡単なので`rfl`って言ってます
+`case isFalse`は一応`hk : arr'.size - 1 - i - j = n + 1`で`hnlt : ¬j < arr'.size - 1 - i`となっていてこれは矛盾しているのですが、`rfl`って言った方が簡単なので`rfl`って言ってます
 
-今回の`case isTrue`は別に持っている仮定に矛盾がないので、前回と同じように`split`
+今回の`case isTrue`は別に持っている仮定に矛盾がないので前回と同じように`split`
 
 ```lean
 case isTrue hlt =>
@@ -617,9 +619,9 @@ hk : arr.size - 1 - i - j = n + 1
 \
 はい。
 
-ネタバレ注意！のところに書いたとおり、問題なのはゴールが具体的すぎることです。
+ネタバレ注意！のところに書いたとおり問題なのはゴールが具体的すぎることです。
 
-出てくる変数をもう少し一般化して、帰納法の仮定として使えるようにしておきましょう。
+出てくる変数をもう少し一般化して帰納法の仮定として使えるようにしておきましょう。
 
 でも特に当然だけど大事なのは、再帰によって次に引数として渡される配列は **`Array.swap`によって変化している可能性がある** ということです。これが原因でさっきは失敗していたわけです。よって左辺(`(bubbleSort.loop₁.loop₂ arr i j).size`)の`arr`と右辺(`arr.size`)の`arr`は別物として扱わなければなりません。ここからは左辺の配列を`arr'`としておきましょう。
 
@@ -641,7 +643,7 @@ have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr
 ```
 ⊢ (bubbleSort.loop₁.loop₂ (arr'.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
 ```
-というゴールは`arr'`は`(arr'.swap j (j + 1) ⋯ ⋯)`ですし、`j`は`j + 1`になってるので仮定を使って対応できません。
+というゴールは`arr'`は`(arr'.swap j (j + 1) ⋯ ⋯)`ですし`j`は`j + 1`になってるので仮定を使って対応できません。
 
 これに対応するため、`induction`には`generalizing`構文を使ってもう少し強力な仮定にします。
 
@@ -658,9 +660,9 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 
 これで帰納ケースで得られる仮定が`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`になってくれました！
 
-またやり直しか…はあ……と思ってるかもしれませんが、安心してください！今までやってきた証明を多少変えるだけです
+またやり直しか…はあ……と思ってるかもしれませんが安心してください！今までやってきた証明を多少変えるだけです
 
-まず`case zero`ですが、`case isFalse`の際のゴールが`arr'.size = arr.size`と少し変わっています。仮定`h_size`を持っているので、`exact`しましょう
+まず`case zero`ですが、`case isFalse`の際のゴールが`arr'.size = arr.size`と少し変わっています。仮定`h_size`を持っているので`exact`しましょう
 ```lean
 case zero =>
   split
@@ -676,7 +678,7 @@ case succ n ih =>
   case isTrue hlt => sorry
   case isFalse hnlt => sorry
 ```
-`case isFalse`は`exact h_size`でも証明できますが、一応矛盾してるし矛盾を示しません?
+`case isFalse`はさっき`rfl`で解決したように`exact h_size`でも解決できますが、一応矛盾してるしやっぱり矛盾を示しません…?
 
 定理[`Nat.lt_of_sub_eq_succ {m n l : Nat} (h : m - n = l.succ) : n < m`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.lt_of_sub_eq_succ)もあるので、簡単です
 
@@ -702,11 +704,11 @@ case isTrue hlt =>
 
 あの時とは違って、今の我々には仮定`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`を持っています！これを使って解決しましょう！
 
-今の仮定`ih`は"任意の"`arr'`と`i`と`j`について言える話なので、これらは何にするか自分で決められるわけです。今回の場合は`arr'`には`(arr'.swap j (j + 1))`を、`i`には`i`を、`j`には`(j + 1)`を指定します
+今の仮定`ih`は"任意の"`arr'`と`i`と`j`について言える話なので、これらは何にするか自分で決められるわけです。今回の場合は`arr'`は`(arr'.swap j (j + 1))`、`i`は`i`、`j`は`(j + 1)`になります。
 
 ただ少し面倒くさくなっている所があって、その自分で決めた`arr'`、`i`、`j`(今回の場合`arr'.swap j (j + 1)`、`i`、`(j + 1)`)が`arr'.size = arr.size`や`arr'.size - 1 - i - j = n`を満たすことも証明しとかなければいけません。
 
-`ih`の結論と今回のゴールが一致しているので、`apply ih`ができます
+`ih`の結論と今回のゴールが一致しているので`apply ih`ができます
 
 ```lean
 case h_1 =>
@@ -725,7 +727,7 @@ case h_1 =>
 ```
 が現れました。めんどっち～
 
-ただどっちも`(arr'.swap j (j + 1) ⋯ ⋯).size`が出ているけど、これって`arr'.size`と変わりませんよね。[`Array.size_swap`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Array/Basic.html#Array.size_swap)という定理もあるので、先に持っておきましょう
+ただどっちも`(arr'.swap j (j + 1) ⋯ ⋯).size`が出ているけどこれって`arr'.size`と変わりませんよね。[`Array.size_swap`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Array/Basic.html#Array.size_swap)という定理もあるので、先に持っておきましょう
 
 ```lean
 case h_1 =>
@@ -746,7 +748,7 @@ case h_1 =>
     rw[h_size_swap]
 ```
 
-さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Omega.html)が使えます！`omega`は自然数や整数の計算なら結構なんでもありに自動で証明してくれるタクティクです。これくらいの証明なら`omega`ぶっぱで解決します
+さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Omega.html)が使えます！`omega`は自然数や整数の計算なら結構なんでもありに自動で証明してくれるタクティクです。今回は`hk : arr'.size - 1 - i - j = n + 1`があるのでこれくらいの証明なら`omega`ぶっぱで解決します
 
 ```lean
 case h_1 =>
@@ -797,9 +799,9 @@ case hk =>
 ```
 なんですが、結局同じように`arr'.size - 1 - i - (j + 1) = n`の証明が必要になりそうですね。
 
-といわけでさっき`calc`で証明したのを`h_eq_n`として`split`の前にとっておきましょう
+といわけでさっき`calc`で証明したのを`h_eq_n`として`split`の前にとっておきましょう。
 
-これさえとれればあとは簡単なので、説明も省きます
+これさえとれればあとは簡単なので説明も省きます
 
 ```lean
 case isTrue hlt =>
@@ -825,11 +827,11 @@ case isTrue hlt =>
     case hk => exact h_eq_n
 ```
 
-これで`case isTrue`を乗り越えたので、ようやく`loop₂_size_eq`の証明が完了しました……！
+これで`case isTrue`を乗り越えたのでようやく`loop₂_size_eq`の証明が完了しました……！
 
 これで`decreasing_by`の証明が……！？まだ終わりませ～ん^^
 
-`loop₂_size_eq`のシグネチャがだいぶ変わったので、何の`arr'`と`arr`と`i`と`j`で`rw`したいのか指定しなければいけません。
+`loop₂_size_eq`のシグネチャがだいぶ変わったので何の`arr'`と`arr`と`i`と`j`で`rw`したいのか指定しなければいけません。
 
 もともと`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`を証明したかったわけなので、引数`arr'`,`arr`には`arr`を、引数`i`には`i`を、引数`j`には`0`を、そして`h_size`には`rfl`を指定します。
 
@@ -956,7 +958,7 @@ _instance implicit_ と呼ばれる、Leanがインスタンス探索の仕事�
 
 ### `if`で書かないの?
 
-普通`if arr[j] > arr[j + 1] then`って書くところをなんでわざわざ`Ord.compare arr[j] arr[j + 1]`にしてんの？って話なんですが、`if`で書くと必要な型クラス制約がちょっと変わってきます。まず`a < b`の書き方を許すために`[LT α]`が必要です。そして`if`の条件部分は命題(`Prop`)を書くのですがこの命題が決定可能である必要があります。今回の場合だと、「任意の`α`の値`a`,`b`について、`a > b`が決定可能」が要求されるので、`[∀(a b : α), Decidable (a > b)]`が必要になります。
+普通`if arr[j] > arr[j + 1] then`って書くところをなんでわざわざ`Ord.compare arr[j] arr[j + 1]`にしてんの？って話なんですが、`if`で書くと必要な型クラス制約がちょっと変わってきます。まず`a < b`の書き方を許すために`[LT α]`が必要です。そして`if`の条件部分は命題(`Prop`)を書くのですがこの命題が決定可能である必要があります。今回の場合だと「任意の`α`の値`a`,`b`について、`a > b`が決定可能」が要求されるので`[∀(a b : α), Decidable (a > b)]`が必要になります。
 
 :::details 具体的なコード
 ```lean
@@ -1065,3 +1067,5 @@ Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコ�
 [^rename_i無しでも行ける]:別にプログラムを書いてる時点で`if h : i < arr.size then`と書けば`rename_i`は無しでもいけます
 
 [^他の依存型言語]:※他の依存型持ってる言語に触れたことが無いだけ
+
+[^Unicodeで書く]:LeanはコードにASCII文字だけでなくUnicode文字も多用します。簡単に入力できるようになっているのでそこまで不自然さも無く慣れます
