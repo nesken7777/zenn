@@ -33,7 +33,7 @@ Lean4は定理証明支援系かつ純粋関数型プログラミング言語な
 
 なんと普通にforで書けます！
 
-```lean
+```sml
 def bubbleSort [Inhabited α] [Ord α] (arr : Array α) : Array α := Id.run do
   let mut arr := arr
   for i in [0:arr.size] do
@@ -55,7 +55,7 @@ https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
 これら手続き的な書き方は全て最終的に全て関数呼び出しの形に変換されます。
 
 :::details 最終的な関数呼び出しの形
-```lean
+```sml
 def bubbleSort : {α : Type} → [inst : Inhabited α] → [inst : Ord α] → Array α → Array α :=
 fun {α} [Inhabited α] [Ord α] arr =>
   (let arr := arr;
@@ -112,21 +112,21 @@ fun {α} [Inhabited α] [Ord α] arr =>
 
 まずシグネチャを考えます。型`α`[^Unicodeで書く]は比較できて、その`α`型の要素の配列を受け取り、ソートした配列を返すので、こう
 
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α := _
 ```
 
 `Array α`は固定長配列というよりかはRustの`Vec<T>`のようなもので大きさは動的に変化します[^Vectorについて]
 
 次に外側のループを回すので、こう
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α := _
   loop₁ arr 0
 ```
 
 外側のループは、`i`を増やしながら内側のループを回すので、こう
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
     let rec loop₂ [Ord α] (arr : Array α) (i : Nat) (j : Nat) : Array α := _
@@ -138,7 +138,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 ```
 
 内側のループを書いて、こう
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
     let rec loop₂ [Ord α] (arr : Array α) (i : Nat) (j : Nat) : Array α :=
@@ -198,7 +198,7 @@ failed to prove index is valid, possible solutions:
 
 じゃあこいつをそのまま証明として取れればいいんだけどな～ってことなんですが、**取れます**。
 
-```lean
+```sml
 if h_index : j < arr.size - 1 - i then
 ```
 
@@ -265,7 +265,7 @@ Leanでは(`partial def`でも`unsafe def`でもなく)`def`で定義された�
 
 我々も`termination_by arr.size - i`と指示しましょう
 
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
     let rec loop₂ [Ord α] (arr : Array α) (i : Nat) (j : Nat) : Array α :=
@@ -309,7 +309,7 @@ h✝ : i < arr.size
 
 いったんここまででこういう下書きになります
 
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   -- ......(中略)
   termination_by arr.size - i
@@ -339,7 +339,7 @@ loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size
 
 「いや簡単に証明できそうだけど何の定理がすでに証明されていて使えるのか知らない……！さすがに`n - (m + 1) < n - m`くらいならあるんじゃないか……？！」ってなりますよね。そんなときに使えるのが[`apply?`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/ApplyQuestion.html)です。`apply?`タクティクは証明のために何の定理が使えるのかを探し出してくれます。使ってみましょう
 
-```lean
+```sml
 decreasing_by
   have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by sorry
   rw[loop₂_size_eq]
@@ -353,7 +353,7 @@ Try this: exact Nat.sub_succ_lt_self arr.size i h✝
 ```
 [`Nat.sub_succ_lt_self (a i : Nat) (h : i < a) : a - (i + 1) < a - i`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.sub_succ_lt_self)という定理が使えるようですね。しかも[`apply`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Apply.html)ではなく[`exact`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Exact.html)で行けるようです。ありがたく使わせていただきましょう
 
-```lean
+```sml
 decreasing_by
   have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by sorry
   rw[loop₂_size_eq]
@@ -370,7 +370,7 @@ unknown identifier 'h'
 
 この`h`とやらは`h✝ : i < arr.size`の`h`ですね。Infoview上で変数名に`✝`が付いたものはアクセス不能になってしまったものです。[`rename_i`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/RenameI.html)を使えば名前を付けて復帰できます。[^rename_i無しでも行ける]
 
-```lean
+```sml
 decreasing_by
   have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by sorry
   rw[loop₂_size_eq]
@@ -392,7 +392,7 @@ decreasing_by
 
 まずとりあえず`loop₂`を定義に展開しましょう。[`unfold`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Unfold.html)[^dsimpが効かない]を使います
 
-```lean
+```sml
 decreasing_by
   have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by
     unfold bubbleSort.loop₁.loop₂
@@ -412,7 +412,7 @@ decreasing_by
 ```
 `if`が邪魔ですね。`if`のとおり条件分岐をしたい場合は[`split`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Split.html)を使います。
 
-```lean
+```sml
 decreasing_by
   have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by
     unfold bubbleSort.loop₁.loop₂
@@ -440,13 +440,13 @@ decreasing_by
 ```
 
 `case isFalse`のゴールは簡単ですね。[`rfl`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Rfl.html)を使って一発です
-```lean
+```sml
 case isFalse => rfl
 ```
 `case isTrue`が問題ですね。`Ordering.gt`の場合とそれ以外とで挙動が違います。
 というわけでもう一回`split`
 
-```lean
+```sml
 case isTrue =>
   split
   case h_1 => sorry
@@ -473,14 +473,14 @@ case isTrue =>
 
 `loop₂`は`j < arr.size - 1 - i`を通らなかった場合に止まる再帰であり`arr.size - 1 - i - j`が減少するわけです。だから
 
-```lean
+```sml
 have loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size := by
   induction (arr.size - i - 1 - j)
 ```
 
 と書きたいんですが、「`j`って何？」とコンパイラに言われてしまいます。仕方ないので`(j : Nat)`として引数にしときますか。でもこれじゃ`j`がなんのためにあるのか分かんないので、`j`の役割からしてゴールの`0`を`j`に書き換えておきましょう
 
-```lean
+```sml
 have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr.size := by
   induction (arr.size - i - 1 - j)
 ```
@@ -489,7 +489,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
 
 じゃあどうすればこの仮定がもらえるのか……というと、[`generalize`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Generalize.html)を使えばいけます
 
-```lean
+```sml
 have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr.size := by
   generalize hk : arr.size - i - 1 - j = k
   induction k
@@ -499,7 +499,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
 
 現状こうなります
 
-```lean
+```sml
 have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr.size := by
   generalize hk : arr.size - i - 1 - j = k
   induction k <;> unfold bubbleSort.loop₁.loop₂
@@ -511,7 +511,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
 
 まず`case zero`から
 
-```lean
+```sml
 case zero =>
   split
   case isTrue hlt => sorry
@@ -529,7 +529,7 @@ hlt : j < arr.size - 1 - i
 
 ただ単に[`contradiction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Contradiction.html)を使おうとしても何かしらの真逆の仮定は持ち合わせていないので失敗しちゃいます。`arr.size - 1 - i - j ≠ 0`を作ってから`contradiction`しましょう。
 
-```lean
+```sml
 case isTrue hlt =>
   have h_ne_z : arr.size - 1 - i - j ≠ 0 := by sorry
   contradiction
@@ -537,7 +537,7 @@ case isTrue hlt =>
 
 さて`h_ne_z`をどうするかなんですが、まあ分かんなかったらとりあえず`apply?`しとけばいいんですよ
 
-```lean
+```sml
 case isTrue hlt =>
   have h_ne_z : arr.size - 1 - i - j ≠ 0 := by apply?
   contradiction
@@ -546,13 +546,13 @@ case isTrue hlt =>
 Try this: exact Nat.sub_ne_zero_iff_lt.mpr hlt
 ```
 定理[`Nat.sub_ne_zero_iff_lt {n m : Nat} : n - m ≠ 0 ↔ m < n`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.sub_ne_zero_iff_lt)ありますね。使います
-```lean
+```sml
 case isTrue hlt =>
   have h_ne_z : arr.size - 1 - i - j ≠ 0 := by exact Nat.sub_ne_zero_iff_lt.mpr hlt
   contradiction
 ```
 これで`case isTrue`の証明が完了したので`case zero`は証明完了です！うまくいっていますね
-```lean
+```sml
 case zero =>
   split
   case isTrue hlt =>
@@ -562,7 +562,7 @@ case zero =>
 ```
 残るは`case succ`ですね
 
-```lean
+```sml
 case succ n ih =>
   split
   case isTrue hlt => sorry
@@ -573,7 +573,7 @@ case succ n ih =>
 
 今回の`case isTrue`は別に持っている仮定に矛盾がないので前回と同じように`split`
 
-```lean
+```sml
 case isTrue hlt =>
   split
   case h_1 => sorry
@@ -630,7 +630,7 @@ hk : arr.size - 1 - i - j = n + 1
 よって新しく考える定理はこうなります:「任意の`arr'.size = arr.size`な`arr'`, `arr`と自然数`i`,`j`について、`(bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`」
 
 というわけで書き直したゴールはこうなります
-```lean
+```sml
 have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr.size) :
   (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size := by sorry
 ```
@@ -649,7 +649,7 @@ have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr
 
 とりあえず`arr'`と`i`と`j`を、`generalizing`を使って一般化しておきましょう[^generalizingの細かいこと]
 
-```lean
+```sml
 have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr.size) :
   (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size := by
   generalize hk : arr'.size - 1 - i - j = k
@@ -663,7 +663,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
 またやり直しか…はあ……と思ってるかもしれませんが安心してください！今までやってきた証明を多少変えるだけです
 
 まず`case zero`ですが、`case isFalse`の際のゴールが`arr'.size = arr.size`と少し変わっています。仮定`h_size`を持っているので`exact`しましょう
-```lean
+```sml
 case zero =>
   split
   case isTrue hlt =>
@@ -672,7 +672,7 @@ case zero =>
   case isFalse hnlt => exact h_size
 ```
 さて`case succ`
-```lean
+```sml
 case succ n ih =>
   split
   case isTrue hlt => sorry
@@ -682,14 +682,14 @@ case succ n ih =>
 
 定理[`Nat.lt_of_sub_eq_succ {m n l : Nat} (h : m - n = l.succ) : n < m`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.lt_of_sub_eq_succ)もあるので、簡単です
 
-```lean
+```sml
 case isFalse hnlt =>
   have : j < arr'.size - 1 - i := by exact Nat.lt_of_sub_eq_succ hk
   contradiction
 ```
 
 問題は`case isTrue`です。とりあえず`split`
-```lean
+```sml
 case isTrue hlt =>
   split
   case h_1 => sorry
@@ -710,7 +710,7 @@ case isTrue hlt =>
 
 `ih`の結論と今回のゴールが一致しているので`apply ih`ができます
 
-```lean
+```sml
 case h_1 =>
   apply ih
   case h_size => sorry
@@ -729,7 +729,7 @@ case h_1 =>
 
 ただどっちも`(arr'.swap j (j + 1) ⋯ ⋯).size`が出ているけどこれって`arr'.size`と変わりませんよね。[`Array.size_swap`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Array/Basic.html#Array.size_swap)という定理もあるので、先に持っておきましょう
 
-```lean
+```sml
 case h_1 =>
   apply ih
   have h_size_swap : (arr'.swap j (j + 1)).size = arr'.size := arr'.size_swap j (j + 1)
@@ -739,7 +739,7 @@ case h_1 =>
 
 `case h_size`の方は[`Eq.trans`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Eq.trans)(推移律)で証明できます。`case hk`の方は一旦`rw`しておきましょう
 
-```lean
+```sml
 case h_1 =>
   have h_size_swap : (arr'.swap j (j + 1)).size = arr'.size := arr'.size_swap j (j + 1)
   apply ih
@@ -750,7 +750,7 @@ case h_1 =>
 
 さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Omega.html)が使えます！`omega`は自然数や整数の計算なら結構なんでもありに自動で証明してくれるタクティクです。今回は`hk : arr'.size - 1 - i - j = n + 1`があるのでこれくらいの証明なら`omega`ぶっぱで解決します
 
-```lean
+```sml
 case h_1 =>
   have h_size_swap : (arr'.swap j (j + 1)).size = arr'.size := arr'.size_swap j (j + 1)
   apply ih
@@ -765,14 +765,14 @@ case h_1 =>
 [`calc`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Calc.html)を使って`=`で繋いでいきます。
 
 まず証明したい等式の左辺から
-```lean
+```sml
 case hk =>
   rw[h_size_swap]
   calc arr'.size - 1 - i - (j + 1)
 ```
 
 `hk : arr'.size - 1 - i - j = n + 1`があるのでそれにあわせて変形し、
-```lean
+```sml
 case hk =>
   rw[h_size_swap]
   calc arr'.size - 1 - i - (j + 1)
@@ -781,7 +781,7 @@ case hk =>
 
 [`Nat.sub_eq_of_eq_add {a b c : Nat} (h : a = c + b) : a - b = c`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.sub_eq_of_eq_add)があるのでこれで証明完了です
 
-```lean
+```sml
 case hk =>
   rw[h_size_swap]
   calc arr'.size - 1 - i - (j + 1)
@@ -803,7 +803,7 @@ case hk =>
 
 これさえとれればあとは簡単なので説明も省きます
 
-```lean
+```sml
 case isTrue hlt =>
   have h_eq_n : arr'.size - 1 - i - (j + 1) = n := by
     calc arr'.size - 1 - i - (j + 1)
@@ -835,7 +835,7 @@ case isTrue hlt =>
 
 もともと`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`を証明したかったわけなので、引数`arr'`,`arr`には`arr`を、引数`i`には`i`を、引数`j`には`0`を、そして`h_size`には`rfl`を指定します。
 
-```lean
+```sml
 decreasing_by
   have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr.size) :
     (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size := /- 省略 -/
@@ -852,7 +852,7 @@ decreasing_by
 
 では完成したバブルソートのコード全体を見てみましょう
 
-```lean
+```sml
 def bubbleSort [Ord α] (arr : Array α) : Array α :=
   let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
     let rec loop₂ [Ord α] (arr : Array α) (i : Nat) (j : Nat) : Array α :=
@@ -961,7 +961,7 @@ _instance implicit_ と呼ばれる、Leanがインスタンス探索の仕事�
 普通`if arr[j] > arr[j + 1] then`って書くところをなんでわざわざ`Ord.compare arr[j] arr[j + 1]`にしてんの？って話なんですが、`if`で書くと必要な型クラス制約がちょっと変わってきます。まず`a < b`の書き方を許すために`[LT α]`が必要です。そして`if`の条件部分は命題(`Prop`)を書くのですがこの命題が決定可能である必要があります。今回の場合だと「任意の`α`の値`a`,`b`について、`a > b`が決定可能」が要求されるので`[∀(a b : α), Decidable (a > b)]`が必要になります。
 
 :::details 具体的なコード
-```lean
+```sml
 def bubbleSortif [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) : Array α :=
   let rec loop₁ [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) (i : Nat) : Array α :=
     let rec loop₂ [LT α]  [∀(a b : α), Decidable (a > b)] (arr : Array α) (i : Nat) (j : Nat) : Array α :=
@@ -998,7 +998,7 @@ Leanには`set_option`というコマンドがあり、この中の`trace.Elab.s
 ### for版でindexが範囲内にあることを証明しようとした
 
 一応for版でも以下のように書けば証明項が取れます
-```lean
+```sml
 def bubbleSort [Inhabited α] [Ord α] (arr : Array α) : Array α := Id.run do
   let mut arr := arr
   for h₁ : i in [0:arr.size] do
@@ -1036,10 +1036,10 @@ VSCodeの拡張機能の[Error Lens](https://marketplace.visualstudio.com/items?
 
 ## 戯言
 
-まだLeanのシンタックスハイライトが効いてないからコードブロックがめちゃめちゃ見づらくなってる……エラーも無地だから区別も付きにくい……
+まだLeanのシンタックスハイライトが効かないのでStandardMLのシンタックスハイライトで無理に代用してます……
 
 Prism.jsさんお願いします(https://github.com/PrismJS/prism/pull/3765)\
-と思ったけど、開発止まってる……？
+と思ったけど、10ヶ月前から更新止まってる……？
 
 Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコード面だけじゃ伝わりにくいことが多いから個人サイトで[verso](https://github.com/leanprover/verso)使う方がいいってのは、ある　ただ個人サイト持っていないからversoが使えるサイトが欲しいよ～
 
