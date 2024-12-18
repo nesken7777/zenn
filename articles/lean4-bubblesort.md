@@ -937,7 +937,6 @@ https://lean-ja.github.io/type_checking_in_lean4_ja/
 https://lean-ja.github.io/mathematics_in_lean_source/
 
 https://lean-ja.github.io/reference-manual-ja/
-(Language Referenceは(原文と同様に)途中)
 
 ## ちなみに
 
