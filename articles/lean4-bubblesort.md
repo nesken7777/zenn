@@ -303,7 +303,7 @@ h✝ : i < arr.size
 
 さて`arr.size - (i + 1) < arr.size - i`なのは当然なのですが、今回示さなければならないのは`(bubbleSort.loop₁.loop₂ arr i 0).size - (i + 1) < arr.size - i`です。`loop₂`が`arr`の大きさを変えることは無いから`arr.size`に書き換えたいんだけどなぁ……
 
-とここで[`rw`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Rw.html)が使えます。`loop₂`によって`arr`の大きさが変わらないこと(`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`)を示せば、この`rw`タクティクによってゴールを`arr.size - (i + 1) < arr.size - i`に書き換えて簡単に証明できます。
+とここで[`rw`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Rw.html)が使えます。`loop₂`によって`arr`の大きさが変わらないこと(`(bubbleSort.loop₁.loop₂ arr i 0).size = arr.size`)を示せば、この`rw`タクティクによってゴールを`arr.size - (i + 1) < arr.size - i`に書き換えて簡単に証明できます。
 
 いったんここまででこういう下書きになります
 
@@ -318,7 +318,7 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
   loop₁ arr 0
 ```
 
-[`have`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Have.html)は`let`とほぼ同じです。使い分けはあんまり考えてなく、証明だったらとりあえず`have`、値だったらとりあえず`let`にしてます。
+[`have`](https://lean-ja.github.io/lean-by-example/Tactic/Have.html)は`let`とほぼ同じです。使い分けはあんまり考えてなく、証明だったらとりあえず`have`、値だったらとりあえず`let`にしてます。
 
 んーさきに`rw`より下の`sorry`を無くしましょう。
 
@@ -335,7 +335,7 @@ loop₂_size_eq : (bubbleSort.loop₁.loop₂ arr i 0).size = arr.size
 ⊢ arr.size - (i + 1) < arr.size - i
 ```
 
-「いや簡単に証明できそうだけど何の定理がすでに証明されていて使えるのか知らない……！さすがに`n - (m + 1) < n - m`くらいならあるんじゃないか……？！」ってなりますよね。そんなときに使えるのが[`apply?`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/ApplyQuestion.html)です。`apply?`タクティクは証明のために何の定理が使えるのかを探し出してくれます。使ってみましょう
+「いや簡単に証明できそうだけど何の定理がすでに証明されていて使えるのか知らない……！さすがに`n - (m + 1) < n - m`くらいならあるんじゃないか……？！」ってなりますよね。そんなときに使えるのが[`apply?`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/ApplyQuestion.html)です。`apply?`タクティクは証明のために何の定理が使えるのかを探し出してくれます。使ってみましょう
 
 ```sml
 decreasing_by
@@ -349,7 +349,7 @@ loop₁ arr 0
 ```
 Try this: exact Nat.sub_succ_lt_self arr.size i h✝
 ```
-[`Nat.sub_succ_lt_self (a i : Nat) (h : i < a) : a - (i + 1) < a - i`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.sub_succ_lt_self)という定理が使えるようですね。しかも[`apply`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Apply.html)ではなく[`exact`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Exact.html)で行けるようです。ありがたく使わせていただきましょう
+[`Nat.sub_succ_lt_self (a i : Nat) (h : i < a) : a - (i + 1) < a - i`](https://leanprover-community.github.io/mathlib4_docs/Init/Data/Nat/Basic.html#Nat.sub_succ_lt_self)という定理が使えるようですね。しかも[`apply`](https://lean-ja.github.io/lean-by-example/Tactic/Apply.html)ではなく[`exact`](https://lean-ja.github.io/lean-by-example/Tactic/Exact.html)で行けるようです。ありがたく使わせていただきましょう
 
 ```sml
 decreasing_by
@@ -366,7 +366,7 @@ unknown identifier 'h'
 
 え？( `-´ #)せっかく使ったのになめとんのか
 
-この`h`とやらは`h✝ : i < arr.size`の`h`ですね。Infoview上で変数名に`✝`が付いたものはアクセス不能になってしまったものです。[`rename_i`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/RenameI.html)を使えば名前を付けて復帰できます。[^rename_i無しでも行ける]
+この`h`とやらは`h✝ : i < arr.size`の`h`ですね。Infoview上で変数名に`✝`が付いたものはアクセス不能になってしまったものです。[`rename_i`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/RenameI.html)を使えば名前を付けて復帰できます。[^rename_i無しでも行ける]
 
 ```sml
 decreasing_by
@@ -388,7 +388,7 @@ decreasing_by
 
 ### `loop₂`が配列の大きさを変えないことを証明する
 
-まずとりあえず`loop₂`を定義に展開しましょう。[`unfold`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Unfold.html)[^dsimpが効かない]を使います
+まずとりあえず`loop₂`を定義に展開しましょう。[`unfold`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Unfold.html)[^dsimpが効かない]を使います
 
 ```sml
 decreasing_by
@@ -408,7 +408,7 @@ decreasing_by
     else arr).size =
   arr.size
 ```
-`if`が邪魔ですね。`if`のとおり条件分岐をしたい場合は[`split`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Split.html)を使います。
+`if`が邪魔ですね。`if`のとおり条件分岐をしたい場合は[`split`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Split.html)を使います。
 
 ```sml
 decreasing_by
@@ -437,7 +437,7 @@ decreasing_by
 ⊢ arr.size = arr.size
 ```
 
-`case isFalse`のゴールは簡単ですね。[`rfl`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Rfl.html)を使って一発です
+`case isFalse`のゴールは簡単ですね。[`rfl`](https://lean-ja.github.io/lean-by-example/Tactic/Rfl.html)を使って一発です
 ```sml
 case isFalse => rfl
 ```
@@ -461,7 +461,7 @@ case isTrue =>
 
 また`unfold`する……?いやいや、帰納法を使いましょう。
 
-振り出しに戻ったのは再帰しているからで、再帰しているなら帰納法を使って証明するものです。[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Induction.html)を使った方法で証明をやり直しましょう。
+振り出しに戻ったのは再帰しているからで、再帰しているなら帰納法を使って証明するものです。[`induction`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Induction.html)を使った方法で証明をやり直しましょう。
 
 ### `loop₂`が配列の大きさを変えないことを証明する₂
 
@@ -485,7 +485,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
 
 でこうなるんですが、残念ながらこう書いたところで都合よく`arr.size - 1 - i - j = 0`や`arr.size - 1 - i - j = n + 1`のような仮定をもらうことができません！
 
-じゃあどうすればこの仮定がもらえるのか……というと、[`generalize`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Generalize.html)を使えばいけます
+じゃあどうすればこの仮定がもらえるのか……というと、[`generalize`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Generalize.html)を使えばいけます
 
 ```sml
 have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr.size := by
@@ -505,7 +505,7 @@ have loop₂_size_eq (j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr
   case succ n ih => sorry
 ```
 
-[`<;>`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/SeqFocus.html)を使って`induction`によって生まれる2つのゴールの両方に`unfold`をあてています。どちらも`unfold`することには変わりないので。
+[`<;>`](https://lean-ja.github.io/lean-by-example/Tactic/SeqFocus.html)を使って`induction`によって生まれる2つのゴールの両方に`unfold`をあてています。どちらも`unfold`することには変わりないので。
 
 まず`case zero`から
 
@@ -525,7 +525,7 @@ hlt : j < arr.size - 1 - i
 ```
 の二つがあります。`arr.size - 1 - i - j = 0`なのに`j < arr.size - 1 - i`なのはおかしな話です。矛盾を示しましょう。
 
-ただ単に[`contradiction`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Contradiction.html)を使おうとしても何かしらの真逆の仮定は持ち合わせていないので失敗しちゃいます。`arr.size - 1 - i - j ≠ 0`を作ってから`contradiction`しましょう。
+ただ単に[`contradiction`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Contradiction.html)を使おうとしても何かしらの真逆の仮定は持ち合わせていないので失敗しちゃいます。`arr.size - 1 - i - j ≠ 0`を作ってから`contradiction`しましょう。
 
 ```sml
 case isTrue hlt =>
@@ -746,7 +746,7 @@ case h_1 =>
     rw[h_size_swap]
 ```
 
-さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Omega.html)が使えます！`omega`は自然数や整数の計算なら結構なんでもありに自動で証明してくれるタクティクです。今回は`hk : arr'.size - 1 - i - j = n + 1`があるのでこれくらいの証明なら`omega`ぶっぱで解決します
+さて`case hk`のゴールは`⊢ arr'.size - 1 - i - (j + 1) = n`となりましたが、ここで最強タクティク[`omega`](https://lean-ja.github.io/lean-by-example/Tactic/Omega.html)が使えます！`omega`は自然数や整数の計算なら結構なんでもありに自動で証明してくれるタクティクです。今回は`hk : arr'.size - 1 - i - j = n + 1`があるのでこれくらいの証明なら`omega`ぶっぱで解決します
 
 ```sml
 case h_1 =>
@@ -760,7 +760,7 @@ case h_1 =>
 
 ……いやーせっかくだし手で証明しません？^^;
 
-[`calc`](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Calc.html)を使って`=`で繋いでいきます。
+[`calc`](https://lean-ja.github.io/lean-by-example/Tactic/Calc.html)を使って`=`で繋いでいきます。
 
 まず証明したい等式の左辺から
 ```sml
@@ -1051,7 +1051,7 @@ Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコ�
 
 [^関数の停止について]:なぜ停止することが必要なのかの詳細は、ここに書いてあります:https://lean-lang.org/blog/2024-1-11-recursive-definitions-in-lean/
 
-[^dsimpが効かない]:[`dsimp`タクティク](https://lean-ja.github.io/lean-by-example/Reference/Tactic/Dsimp.html)はなぜか何も展開してくれませんでした……
+[^dsimpが効かない]:[`dsimp`タクティク](https://lean-ja.github.io/lean-by-example/Tactic/Dsimp.html)はなぜか何も展開してくれませんでした……
 
 [^generalizingの細かいこと]:ちなみに`arr`も`generalizing`してもいいですし`i`は別に`generalizing`しなくてもいいです。あと「使えない！」って騒いでた時も実は`j`だけは`generalizing`できます
 
