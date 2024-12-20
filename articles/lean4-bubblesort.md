@@ -648,7 +648,7 @@ have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr
 とりあえず`arr'`と`i`と`j`を、`generalizing`を使って一般化しておきましょう[^generalizingの細かいこと]
 
 ```sml
-have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr.size) :
+have loop₂_size_eq (arr' arr : Array α) (i j : Nat) (h_size : arr'.size = arr.size) :
   (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size := by
   generalize hk : arr'.size - 1 - i - j = k
   induction k generalizing arr' i j <;> unfold bubbleSort.loop₁.loop₂
@@ -656,7 +656,7 @@ have loop₂_size_eq {arr' arr : Array α} {i j : Nat} (h_size : arr'.size = arr
   case succ n ih => sorry
 ```
 
-これで帰納ケースで得られる仮定が`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`になってくれました！
+これで帰納ケースで得られる仮定が`ih : ∀ (arr' : Array α) (i j : Nat), arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`になってくれました！
 
 またやり直しか…はあ……と思ってるかもしれませんが安心してください！今までやってきた証明を多少変えるだけです
 
@@ -700,7 +700,7 @@ case isTrue hlt =>
 ⊢ (bubbleSort.loop₁.loop₂ (arr'.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
 ```
 
-あの時とは違って、今の我々には仮定`ih : ∀ {arr' : Array α} {i j : Nat}, arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`を持っています！これを使って解決しましょう！
+あの時とは違って、今の我々には仮定`ih : ∀ (arr' : Array α) (i j : Nat), arr'.size = arr.size → arr'.size - 1 - i - j = n → (bubbleSort.loop₁.loop₂ arr' i j).size = arr.size`を持っています！これを使って解決しましょう！
 
 今の仮定`ih`は"任意の"`arr'`と`i`と`j`について言える話なので、これらは何にするか自分で決められるわけです。今回の場合は`arr'`は`(arr'.swap j (j + 1))`、`i`は`i`、`j`は`(j + 1)`になります。
 
