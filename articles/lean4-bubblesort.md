@@ -1023,6 +1023,72 @@ arr : Array α := r✝
 ```
 となっており、forを経るごとに`arr`が別のものとして認識されてしまいます。特に`arr✝².size`と`r✝¹.size`が一致すること、`r✝¹.size`と`r✝.size`が一致することの証明がどう持てばいいかが分からなくて断念しています……助けてください
 
+## 追記:for版でもindexが範囲内にあることを証明できます！
+
+(追記:2024-12-22)
+
+LEAN JA Discordサーバー(https://discord.gg/RnPdWctrSU)にて[pandaman64](https://zenn.dev/pandaman64)さんに、この記事のコメントにて[ebi_chan](https://zenn.dev/ebi_chan)さんにfor版でもindexが範囲内にあることの証明方法を教えていただきました！
+
+```coq
+def bubbleSort [Ord α] (arr : Array α) : Array α := Id.run do
+  let mut size := arr.size
+  let mut arr : { arr : Array α // arr.size = size } := ⟨arr, rfl⟩
+  for h₁ : i in [0:size] do
+    for h₂ : j in [0:size - 1 - i] do
+      have : j < size - 1 - i := h₂.upper
+      match Ord.compare arr.val[j] arr.val[j + 1] with
+      |.gt => arr := ⟨arr.val.swap j (j + 1), by rw[Array.size_swap, arr.property]⟩
+      |.lt |.eq => pure ()
+  arr.val
+```
+
+一旦`arr.size`を`size`として取り、それを[`Subtype`](https://leanprover-community.github.io/mathlib4_docs/Init/Prelude.html#Subtype)で`arr`の中に情報を入れこんでおいて、forの中で使えるようにするようにした感じですね。あと他にforの範囲指定の部分が`arr.size`から`size`に変わっています
+
+`j < size - 1 - i`の証明(前述した`Membership.mem.upper`で簡単に取れる)さえ取ってしまえばあとは境界チェックの証明は`get_elem_tactic`内の`omega`が勝手に解決してくれます。境界チェックには`j < arr.val.size`の証明が必要なはずですが、`j < size - 1 - i`を取るだけで解決されています。どうやら`omega`は`Subtype`の言明まで見てかましてくれるみたいですね。強すぎだろ
+
+境界チェックの証明(←最初からそう言えばよかった…)ができたので、これで`[Inhabited α]`を付ける必要も無くなります！
+
+ちなみにforの範囲を`size`じゃなくて`arr.val.size`としても多少の手間が加わるだけで境界チェックの証明はできます。(これもebi_chanさんから指摘していただいて気づきました)
+
+:::details forの範囲をsizeからarr.val.sizeにした場合
+```coq
+def bubbleSort [Ord α] (arr : Array α) : Array α := Id.run do
+  let size := arr.size
+  let mut arr : { arr : Array α // arr.size = size } := ⟨arr, rfl⟩
+  for h₁ : i in [0:arr.val.size] do
+    for h₂ : j in [0:arr.val.size - 1 - i] do
+      have : j < size - 1 - i := by
+        rename_i col _
+        have h_jind := h₂.upper
+        dsimp[col] at h_jind
+        omega
+      match Ord.compare arr.val[j] arr.val[j + 1] with
+      |.gt => arr := ⟨arr.val.swap j (j + 1), by rw[Array.size_swap, arr.property]⟩
+      |.lt |.eq => pure ()
+  arr.val
+```
+:::
+
+なのでキーとなるのは「`Subtype`に`arr`の`size`に関する情報を命題として入れこむ」ところにあります。
+
+この方法を教えてもらった(チラ見だけした)とき、「ならば命題も`mut`にすれば(マクロ展開後は直積になるため)for内で使えるんじゃ…？」と思ったのですが、これは見当違いで、重要なのは「その`arr`が`arr.size = size`であること」なんです。[^表現しづら]
+
+つまり自分が考えていたのは
+```sml
+def bubbleSort [Ord α] (arr : Array α) : Array α := Id.run do
+  let size := arr.size
+  let mut arr := arr
+  let mut size_prop : arr.size = size := rfl
+```
+
+なんですが、これじゃ意味無いんです。`size_prop`は結局ついさっき1行前の`arr`の「`arr.size`が`size`と等しい」としか言えておらず、`for`の中の境界チェックの時は(一回断念したように)違う`arr`の`size`に対して証明を要求されて無様に撃沈します。
+
+なのでこれは`Subtype`として、「値とその値の性質を表す命題」をペアにすることが必要なんです。このペアは"依存和型"(とか"依存直積型"とか"シグマ型"とか"依存ペア型"とか)と言われています。これはLeanで存在の命題を表すときの[`Exists`](https://leanprover-community.github.io/mathlib4_docs/Init/Core.html#Exists)と中身は同じで、違うのはそれが命題(`Prop`)か型(`Sort (max 1 u)`)かくらいです。
+
+この"依存和型"は依存型を代表する2つの型(依存積型と依存和型)の1つで、それを直に使っているわけです。
+
+ここにもLeanの奥深さが出てて面白いですね！
+
 ## 小ネタ
 
 VSCodeの拡張機能の[Error Lens](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens)はLeanと相性抜群だと思います。
@@ -1066,3 +1132,5 @@ Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコ�
 [^他の依存型言語]:※他の依存型持ってる言語に触れたことが無いだけ
 
 [^Unicodeで書く]:LeanはコードにASCII文字だけでなくUnicode文字も多用します。簡単に入力できるようになっているのでそこまで不自然さも無く慣れます
+
+[^表現しづら]:伝わらなさそうな言い方しか思いつかなくてハゲ
