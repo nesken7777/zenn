@@ -1089,6 +1089,174 @@ def bubbleSort [Ord α] (arr : Array α) : Array α := Id.run do
 
 ここにもLeanの奥深さが出てて面白いですね！
 
+## 追記₂:`decreasing_by`をもっと短く証明できます！
+
+(追記:2024-12-24)ebi_chanさんに`decreasing_by`のより短い証明についても教えていただきました！
+
+```sml
+def bubbleSort [Ord α] (arr : Array α) : Array α :=
+  let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
+    let rec loop₂ [Ord α] (arr : Array α) (i j : Nat) : Array α :=
+      if h_index : j < arr.size - 1 - i then
+        match Ord.compare arr[j] arr[j + 1] with
+        |.gt => loop₂ (arr.swap j (j + 1)) i (j + 1)
+        |.lt |.eq => loop₂ arr i (j + 1)
+      else
+        arr
+    if i < arr.size then
+      loop₁ (loop₂ arr i 0) (i + 1)
+    else
+      arr
+    termination_by arr.size - i
+    decreasing_by
+      let rec loop₂_size_eq (arr : Array α) (i j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr.size := by
+        unfold bubbleSort.loop₁.loop₂
+        split
+        case isTrue hlt =>
+          split <;> rw[loop₂_size_eq]
+          case h_1 => rw[Array.size_swap]
+        case isFalse hnlt => rfl
+      rw[loop₂_size_eq]
+      rename_i h
+      exact Nat.sub_succ_lt_self arr.size i h
+  loop₁ arr 0
+```
+
+34行あった`decreasing_by`がたった10行で収まっています。
+
+目立つ違いとして、`induction`無しで証明が完了しています。
+
+あと必要な引数が`(arr : Array α) (i j : Nat)`となっており、`arr'`も`(h_size : arr'.size = arr.size)`も必要なくなってます。
+
+ただこれだと`(kernel) declaration has metavariables 'bubbleSort.loop₁._unary'`という謎のエラー(おそらくバグ[^Zulipに書いた])が出てしまうので、`loop₂`と`loop₂_size_eq`を独立させておきましょう。
+
+```sml
+def loop₂ [Ord α] (arr : Array α) (i j : Nat) : Array α :=
+  if h_index : j < arr.size - 1 - i then
+    match Ord.compare arr[j] arr[j + 1] with
+    |.gt => loop₂ (arr.swap j (j + 1)) i (j + 1)
+    |.lt |.eq => loop₂ arr i (j + 1)
+  else
+    arr
+
+theorem loop₂_size_eq [Ord α] (arr : Array α) (i j : Nat) : (loop₂ arr i j).size = arr.size := by
+  unfold loop₂
+  split
+  case isTrue hlt =>
+    split <;> rw[loop₂_size_eq]
+    case h_1 => rw[Array.size_swap]
+  case isFalse hnlt => rfl
+
+def bubbleSort [Ord α] (arr : Array α) : Array α :=
+  let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
+    if i < arr.size then
+      loop₁ (loop₂ arr i 0) (i + 1)
+    else
+      arr
+    termination_by arr.size - i
+    decreasing_by
+      rw[loop₂_size_eq]
+      rename_i h
+      exact Nat.sub_succ_lt_self arr.size i h
+  loop₁ arr 0
+```
+
+一体何が起こってるんでしょうか。新しくなった`loop₂_size_eq`の中を追っていきましょう。
+
+この状態の奴を、
+```
+⊢ (loop₂ arr i j).size = arr.size
+```
+`unfold loop₂`して、
+```
+⊢ (if h_index : j < arr.size - 1 - i then
+      match compare arr[j] arr[j + 1] with
+      | Ordering.gt => loop₂ (arr.swap j (j + 1) ⋯ ⋯) i (j + 1)
+      | Ordering.lt => loop₂ arr i (j + 1)
+      | Ordering.eq => loop₂ arr i (j + 1)
+    else arr).size =
+  arr.size
+```
+`split`したやつの`isTrue`側
+```
+⊢ (match compare arr[j] arr[j + 1] with
+    | Ordering.gt => loop₂ (arr.swap j (j + 1) ⋯ ⋯) i (j + 1)
+    | Ordering.lt => loop₂ arr i (j + 1)
+    | Ordering.eq => loop₂ arr i (j + 1)).size =
+  arr.size
+```
+を、\
+`split`して`<;>`で`rw[loop₂_size_eq]`！
+```
+case h_1
+(省略)
+⊢ (arr.swap j (j + 1) ⋯ ⋯).size = arr.size
+```
+( ˙ㅿ˙ )え
+
+まどう考えたって`rw[loop₂_size_eq]`が何かしてますね。`loop₂_size_eq`を再帰的に利用してます。
+
+ちょっと`<;>`のおかげで一気にやりすぎなので、一旦ケース分けして考えましょう。
+
+```sml
+case isTrue hlt =>
+  split
+  case h_1 => rw[loop₂_size_eq]
+  case h_2 => rw[loop₂_size_eq]
+  case h_3 => rw[loop₂_size_eq]
+```
+
+で`case h_1`について。\
+これが、
+```
+⊢ (loop₂ (arr.swap j (j + 1) ⋯ ⋯) i (j + 1)).size = arr.size
+```
+こうなる
+```
+⊢ (arr.swap j (j + 1) ⋯ ⋯).size = arr.size
+```
+つまり左辺を`rw`している訳ですね。
+
+だからあとは`rw[Array.size_swap]`するだけになる
+```sml
+case h_1 => rw[loop₂_size_eq, Array.size_swap]
+```
+
+これでうまく証明ができたということになります。
+
+ただ疑問なのが、なぜ再帰的に`rw[loop₂_size_eq]`ができているのでしょう…？
+
+いろいろ試してみたところ、どうやら再帰的に`rw`を用いることは証明中はとりあえず許されていて、後からその再帰がOKか判断しているみたいです。
+
+なので一応これでもNo goalsとなるのですが、
+```
+theorem loop₂_size_eq_bad [Ord α] (arr : Array α) (i j : Nat) : (loop₂ arr i j).size = arr.size := by
+  rw[loop₂_size_eq_bad]
+```
+その宣言に対してエラーが出ます。
+![](/images/articles/lean4-bubblesort/rw(direct).png)
+
+```
+fail to show termination for
+  loop₂_size_eq_bad
+with errors
+failed to infer structural recursion:
+Not considering parameter α of loop₂_size_eq_bad:
+  it is unchanged in the recursive calls
+...(省略)
+
+well-founded recursion cannot be used, 'loop₂_size_eq_bad' does not take any (non-fixed) arguments
+```
+「変わってる変数が無いから整礎再帰が使えないよ」と言ってますね。
+
+とはいえこれは関数の再帰的定義でも同じで、とりあえず再帰的に利用すること自体は関数でも証明でも許されていて、それが許される利用方法かはあとからチェックされます。
+
+となると問題は「なぜ構造的再帰でもない`rw[loop₂_size_eq]`を使った証明が許されるのか？」ということになりますが、これは`loop₂`を定義したときと同じように整礎再帰していることがLean側で自動的に証明されているからです(`set_option trace.Elab.definition.wf true`を置いてみると分かります)。
+
+![](/images/articles/lean4-bubblesort/wf_proof.png)
+
+ここでも`omega`がぶちかまされてます。最強すぎ
+
 ## 小ネタ
 
 VSCodeの拡張機能の[Error Lens](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens)はLeanと相性抜群だと思います。
@@ -1134,3 +1302,5 @@ Zenn上で投稿するためにMarkdownで記事書いているけどLeanはコ�
 [^Unicodeで書く]:LeanはコードにASCII文字だけでなくUnicode文字も多用します。簡単に入力できるようになっているのでそこまで不自然さも無く慣れます
 
 [^表現しづら]:伝わらなさそうな言い方しか思いつかなくてハゲ
+
+[^Zulipに書いた]:[Zulipに書いた](https://leanprover.zulipchat.com/#narrow/channel/270676-lean4/topic/.22.28kernel.29.20declaration.20has.20metavariables.22.20error/near/490639360)けどこれでいいのかな……
