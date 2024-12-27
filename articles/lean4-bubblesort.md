@@ -1257,6 +1257,92 @@ well-founded recursion cannot be used, 'loop₂_size_eq_bad' does not take any (
 
 ここでも`omega`がぶちかまされてます。最強すぎ
 
+## 追記₃:`decreasing_by`をもっと短く証明できます！₂
+
+(追記:2024-12-27)
+
+[Zulip](https://leanprover.zulipchat.com/#narrow/channel/270676-lean4/topic/.22.28kernel.29.20declaration.20has.20metavariables.22.20error/near/490648394)にて"Functional induction"なるものを教えていただきました！
+
+再帰している関数には`.induct`が自動で生えてきて、これが`induction`に使えるようです。
+
+詳しい説明は以下にあります
+
+https://lean-lang.org/blog/2024-5-17-functional-induction/
+
+そしてFunctional Inductionを使った結果がこちら
+
+```sml
+def bubbleSort [Ord α] (arr : Array α) : Array α :=
+  let rec loop₁ [Ord α] (arr : Array α) (i : Nat) : Array α :=
+    let rec loop₂ [Ord α] (arr : Array α) (i : Nat) (j : Nat) : Array α :=
+      if h_index : j < arr.size - 1 - i then
+        match Ord.compare arr[j] arr[j + 1] with
+        |.gt => loop₂ (arr.swap j (j + 1)) i (j + 1)
+        |.lt |.eq => loop₂ arr i (j + 1)
+      else
+        arr
+    if i < arr.size then
+      loop₁ (loop₂ arr i 0) (i + 1)
+    else
+      arr
+  termination_by arr.size - i
+  decreasing_by
+    have loop₂_size_eq (arr : Array α) (i j : Nat) : (bubbleSort.loop₁.loop₂ arr i j).size = arr.size := by
+      induction arr, i, j using bubbleSort.loop₁.loop₂.induct
+      <;> unfold bubbleSort.loop₁.loop₂ <;> simp[*]
+    rw[loop₂_size_eq]
+    rename_i h
+    exact Nat.sub_succ_lt_self arr.size i h
+  loop₁ arr 0
+```
+
+`simp[*]`が全部やりました。
+
+この`bubbleSort.loop₁.loop₂.induct`は何をしたのかというと...
+```
+case case1
+α : Type u_1
+inst✝ : Ord α
+arr✝ : Array α
+i✝ j✝ : Nat
+h✝ : j✝ < arr✝.size - 1 - i✝
+x✝ : compare arr✝[j✝] arr✝[j✝ + 1] = Ordering.gt
+ih1✝ : (bubbleSort.loop₁.loop₂ (arr✝.swap j✝ (j✝ + 1) ⋯ ⋯) i✝ (j✝ + 1)).size = (arr✝.swap j✝ (j✝ + 1) ⋯ ⋯).size
+⊢ (bubbleSort.loop₁.loop₂ arr✝ i✝ j✝).size = arr✝.size
+
+case case2
+α : Type u_1
+inst✝ : Ord α
+arr✝ : Array α
+i✝ j✝ : Nat
+h✝ : j✝ < arr✝.size - 1 - i✝
+x✝ : compare arr✝[j✝] arr✝[j✝ + 1] = Ordering.lt
+ih1✝ : (bubbleSort.loop₁.loop₂ arr✝ i✝ (j✝ + 1)).size = arr✝.size
+⊢ (bubbleSort.loop₁.loop₂ arr✝ i✝ j✝).size = arr✝.size
+
+case case3
+α : Type u_1
+inst✝ : Ord α
+arr✝ : Array α
+i✝ j✝ : Nat
+h✝ : j✝ < arr✝.size - 1 - i✝
+x✝ : compare arr✝[j✝] arr✝[j✝ + 1] = Ordering.eq
+ih1✝ : (bubbleSort.loop₁.loop₂ arr✝ i✝ (j✝ + 1)).size = arr✝.size
+⊢ (bubbleSort.loop₁.loop₂ arr✝ i✝ j✝).size = arr✝.size
+
+case case4
+α : Type u_1
+inst✝ : Ord α
+arr✝ : Array α
+i✝ j✝ : Nat
+h✝ : ¬j✝ < arr✝.size - 1 - i✝
+⊢ (bubbleSort.loop₁.loop₂ arr✝ i✝ j✝).size = arr✝.size
+```
+
+と発生する分岐全てについて仮定を網羅し、しかも必要としていた帰納ケースの仮定(`ih1✝`)までもらえる状態にしてくれます。だからあとは`simp[*]`が勝手に、持っている仮定なり`[simp]`属性が付いた定理なりを使って全部自動で証明できたんですね。
+
+どうやらこのやり方こそが**Lean4の**(証明自動化としての)**能力を最大限に発揮した書き方**っぽいですね。
+
 ## 小ネタ
 
 VSCodeの拡張機能の[Error Lens](https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens)はLeanと相性抜群だと思います。
