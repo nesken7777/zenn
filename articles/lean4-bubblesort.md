@@ -50,7 +50,7 @@ Leanは純粋関数型言語ではあれどdo記法の中ならかなり手続�
 
 具体的には`else`のない`if`、早期リターン、`for`、`while`、果てには可変変数まで可能です。
 
-https://lean-ja.github.io/fp-lean-ja/monad-transformers/do.html
+https://s-taiga.github.io/fpil-ja/monad-transformers/do.html
 
 これら手続き的な書き方は全て最終的に全て関数呼び出しの形に変換されます。
 
@@ -943,7 +943,7 @@ https://s-taiga.github.io/reference-manual-ja/
 
 ### `[Inhabited α]`と`[Ord α]`って何?
 
-_instance implicit_ と呼ばれる、Leanがインスタンス探索の仕事をする引数です([Theorem Proving in Lean 4の日本語訳](https://aconite-ac.github.io/theorem_proving_in_lean4_ja/type_classes.html)では"インスタンス暗黙引数"、[Functional Programming in Leanの日本語訳](https://lean-ja.github.io/fp-lean-ja/type-classes/polymorphism.html)では"暗黙のインスタンス"と呼ばれる)
+_instance implicit_ と呼ばれる、Leanがインスタンス探索の仕事をする引数です([Theorem Proving in Lean 4の日本語訳](https://aconite-ac.github.io/theorem_proving_in_lean4_ja/type_classes.html)では"インスタンス暗黙引数"、[Functional Programming in Leanの日本語訳](https://s-taiga.github.io/fpil-ja/type-classes/polymorphism.html)では"暗黙のインスタンス"と呼ばれる)
 
 役割は型クラス制約と同じです
 
