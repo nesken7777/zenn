@@ -926,17 +926,15 @@ def bubbleSort [Ord α] (arr : Array α) : Array α :=
 
 https://lean-ja.github.io/lean-by-example/
 
-https://lean-ja.github.io/fp-lean-ja/
+https://s-taiga.github.io/fpil-ja/
 
 https://aconite-ac.github.io/theorem_proving_in_lean4_ja/
 
-https://lean-ja.github.io/lean4-metaprogramming-book-ja/
+https://s-taiga.github.io/metaprogramming_in_lean4_ja/
 
-https://lean-ja.github.io/type_checking_in_lean4_ja/
+https://s-taiga.github.io/MIL_ja/
 
-https://lean-ja.github.io/mathematics_in_lean_source/
-
-https://lean-ja.github.io/reference-manual-ja/
+https://s-taiga.github.io/reference-manual-ja/
 
 ## ちなみに
 
